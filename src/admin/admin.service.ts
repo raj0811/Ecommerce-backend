@@ -97,7 +97,6 @@ export class AdminService {
                 'Email and password are required',
             );
         }
-        console.log(email.trim().toLowerCase());
 
         const admin = await this.databaseService.adminModel
             .findOne({
@@ -105,7 +104,6 @@ export class AdminService {
             })
             .select('+password')
             .exec();
-        console.log(admin);
 
         if (!admin || !(await bcrypt.compare(password, admin.password))) {
             throw new UnauthorizedException('Invalid email or password');
@@ -180,7 +178,6 @@ export class AdminService {
             if (error instanceof UnauthorizedException) {
                 throw error;
             }
-
             throw new UnauthorizedException(
                 'Invalid or expired authentication token',
             );
