@@ -7,6 +7,10 @@ import { UserModule } from './user/user.module';
 import { AdminController } from './admin/admin.controller';
 import { AdminModule } from './admin/admin.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import { CustomerModule } from './customer/customer.module';
+import { ProductModule } from './product/product.module';
+import { S3BucketModule } from './s3-bucket/s3-bucket.module';
+import { LandingPageModule } from './landin-page/landin-page.module';
 
 @Module({
   imports: [
@@ -17,7 +21,11 @@ import { MongooseModule } from '@nestjs/mongoose';
     MongooseModule.forRoot(process.env.DB!),
     DatabaseModule,
     UserModule,
-    AdminModule
+    AdminModule,
+    CustomerModule,
+    ProductModule,
+    S3BucketModule,
+    LandingPageModule
   ],
   controllers: [AppController, AdminController],
   providers: [AppService],

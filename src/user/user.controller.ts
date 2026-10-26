@@ -45,7 +45,6 @@ export class UserController {
         );
     }
 
-
     @Post('login')
     @HttpCode(HttpStatus.OK)
     async loginUser(
