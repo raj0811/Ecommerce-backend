@@ -12,6 +12,9 @@ import {
     Get,
     ParseIntPipe,
     ParseBoolPipe,
+    Patch,
+    Param,
+    Delete,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { AdminAuthGuard } from 'src/Guards/admin.AuthGuard';
@@ -220,5 +223,21 @@ export class ProductController {
     @UseGuards(AdminAuthGuard)
     async getDashboardStats() {
         return this.productService.getDashboardStats();
+    }
+
+    @Patch(':id')
+    @UseGuards(AdminAuthGuard)
+    async updateProduct(
+        @Param('id') productId: string,
+        @Body() updates: Record<string, any>,
+    ) {
+        return this.productService.updateProduct(productId, updates);
+    }
+
+    // Soft delete product (deactivates product)
+    @Delete(':id')
+    @UseGuards(AdminAuthGuard)
+    async deleteProduct(@Param('id') productId: string) {
+        return this.productService.deleteProduct(productId);
     }
 }

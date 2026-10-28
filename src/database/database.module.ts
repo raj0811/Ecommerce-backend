@@ -6,6 +6,9 @@ import { User, UserSchema } from './schema/user.schema';
 import { Customer, CustomerSchema } from './schema/customer.schema';
 import { Product, ProductSchema } from './schema/product.schema';
 import { LandingPage, LandingPageSchema } from './schema/landingPage.schema';
+import { Cart, CartSchema } from './schema/cart.schema';
+import { Order, OrderSchema } from './schema/order.schema';
+import { Transaction, TransactionSchema } from './schema/transaction.schema';
 
 @Module({
   imports: [
@@ -14,7 +17,10 @@ import { LandingPage, LandingPageSchema } from './schema/landingPage.schema';
       { name: User.name, schema: UserSchema },
       { name: Customer.name, schema: CustomerSchema },
       { name: Product.name, schema: ProductSchema },
-      { name: LandingPage.name, schema: LandingPageSchema }
+      { name: LandingPage.name, schema: LandingPageSchema },
+      { name: Cart.name, schema: CartSchema },
+      { name: Order.name, schema: OrderSchema },
+      { name: Transaction.name, schema: TransactionSchema }
     ])
   ],
   providers: [DatabaseService],

@@ -11,6 +11,9 @@ import { CustomerModule } from './customer/customer.module';
 import { ProductModule } from './product/product.module';
 import { S3BucketModule } from './s3-bucket/s3-bucket.module';
 import { LandingPageModule } from './landin-page/landin-page.module';
+import { CartModule } from './cart/cart.module';
+import { PaymentModule } from './payment/payment.module';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -25,7 +28,10 @@ import { LandingPageModule } from './landin-page/landin-page.module';
     CustomerModule,
     ProductModule,
     S3BucketModule,
-    LandingPageModule
+    LandingPageModule,
+    CartModule,
+    PaymentModule,
+    OrderModule
   ],
   controllers: [AppController, AdminController],
   providers: [AppService],
