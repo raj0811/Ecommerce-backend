@@ -14,6 +14,7 @@ const mongoose_1 = require("@nestjs/mongoose");
 let WebhookLog = class WebhookLog {
     log;
     event;
+    headers;
 };
 exports.WebhookLog = WebhookLog;
 __decorate([
@@ -24,6 +25,10 @@ __decorate([
     (0, mongoose_1.Prop)({ type: String }),
     __metadata("design:type", String)
 ], WebhookLog.prototype, "event", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String }),
+    __metadata("design:type", String)
+], WebhookLog.prototype, "headers", void 0);
 exports.WebhookLog = WebhookLog = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], WebhookLog);

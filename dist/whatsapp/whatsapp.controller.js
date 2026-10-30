@@ -47,7 +47,13 @@ let WhatsappController = class WhatsappController {
         }
         return res.sendStatus(403);
     }
-    async receiveMessage(body) {
+    async receiveMessage(body, req) {
+        const headers = req.headers;
+        await this.databaseService.webhookLogModel.create({
+            log: JSON.stringify(body),
+            headers: JSON.stringify(headers),
+            event: "refund"
+        });
         const messages = body?.entry?.flatMap((entry) => entry?.changes?.flatMap((change) => change?.value?.messages ?? [])) ?? [];
         for (const message of messages) {
             if (message.type !== "interactive")
@@ -87,8 +93,9 @@ __decorate([
     (0, common_1.Post)("webhook"),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], WhatsappController.prototype, "receiveMessage", null);
 exports.WhatsappController = WhatsappController = __decorate([

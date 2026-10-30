@@ -7,6 +7,7 @@ import {
     Res,
     HttpCode,
     HttpStatus,
+    Req,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { DatabaseService } from 'src/database/database.service';
@@ -57,7 +58,14 @@ export class WhatsappController {
 
     @Post("webhook")
     @HttpCode(HttpStatus.OK)
-    async receiveMessage(@Body() body: any) {
+    async receiveMessage(@Body() body: any, @Req() req: any) {
+
+        const headers = req.headers;
+        await this.databaseService.webhookLogModel.create({
+            log: JSON.stringify(body),
+            headers: JSON.stringify(headers),
+            event: "refund"
+        });
         const messages =
             body?.entry?.flatMap((entry: any) =>
                 entry?.changes?.flatMap(

@@ -6,7 +6,7 @@ export declare class WhatsappController {
     private readonly ordersService;
     constructor(databaseService: DatabaseService, ordersService: OrderService);
     verifyWebhook(mode: string, token: string, challenge: string, res: Response, body: any): Promise<Response<any, Record<string, any>>>;
-    receiveMessage(body: any): Promise<{
+    receiveMessage(body: any, req: any): Promise<{
         received: boolean;
     }>;
 }

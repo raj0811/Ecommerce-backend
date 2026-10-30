@@ -239,8 +239,10 @@ let PaymentController = class PaymentController {
     }
     async webhook(req, body) {
         console.log('Razorpay webhook received:', body);
+        const headers = req.headers;
         await this.databaseService.webhookLogModel.create({
             log: JSON.stringify(body),
+            headers: JSON.stringify(headers),
         });
         if (body.event !== 'payment.captured') {
             return { received: true };
@@ -280,9 +282,11 @@ let PaymentController = class PaymentController {
         return { received: true };
     }
     async refundWebhook(req, body) {
+        const headers = req.headers;
         await this.databaseService.webhookLogModel.create({
             log: JSON.stringify(body),
-            event: body.event,
+            headers: JSON.stringify(headers),
+            event: "refund"
         });
         const event = body.event;
         const payment = body.payload?.payment?.entity;

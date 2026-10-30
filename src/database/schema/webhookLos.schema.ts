@@ -7,6 +7,8 @@ export class WebhookLog {
     log: string;
     @Prop({ type: String })
     event: string;
+    @Prop({ type: String })
+    headers: string;
 
 }
 

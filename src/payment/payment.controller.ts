@@ -368,9 +368,10 @@ export class PaymentController {
     @Post('webhook')
     async webhook(@Req() req: any, @Body() body: any) {
         console.log('Razorpay webhook received:', body);
-
+        const headers = req.headers;
         await this.databaseService.webhookLogModel.create({
             log: JSON.stringify(body),
+            headers: JSON.stringify(headers),
         });
 
         if (body.event !== 'payment.captured') {
@@ -430,9 +431,11 @@ export class PaymentController {
 
     @Post('/refund/webhook')
     async refundWebhook(@Req() req: any, @Body() body: any) {
+        const headers = req.headers;
         await this.databaseService.webhookLogModel.create({
             log: JSON.stringify(body),
-            event: body.event,
+            headers: JSON.stringify(headers),
+            event: "refund"
         });
 
         const event = body.event;
