@@ -15,6 +15,7 @@ export enum TransactionStatus {
     FAILED = "FAILED",
     REFUNDED = "REFUNDED",
     PARTIALLY_REFUNDED = "PARTIALLY_REFUNDED",
+    REFUND_INITIATED = "REFUND_INITIATED",
 }
 
 @Schema({ timestamps: true, collection: "transactions" })

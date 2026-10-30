@@ -11,6 +11,12 @@ export enum OrderStatus {
     SHIPPED = "SHIPPED",
     DELIVERED = "DELIVERED",
     CANCELLED = "CANCELLED",
+    CANCELLATION_REQUESTED = "CANCELLATION_REQUESTED",
+    RETURN_REQUESTED = "RETURN_REQUESTED",
+    RETURN_INITIATED = "RETURN_INITIATED",
+    RETURNED = "RETURNED",
+    COD_INITIATED = "COD_INITIATED",
+    REFUND_INITIATED = "REFUND_INITIATED",
 }
 
 export enum PaymentMethod {
@@ -22,6 +28,7 @@ export enum PaymentStatus {
     PENDING = "PENDING",
     PAID = "PAID",
     FAILED = "FAILED",
+    REFUND_INITIATED = "REFUND_INITIATED",
     REFUNDED = "REFUNDED",
 }
 
@@ -34,7 +41,6 @@ export class OrderItem {
     })
     productId: Types.ObjectId;
 
-    // Product details are snapshotted so order history remains accurate.
     @Prop({ type: String, required: true, trim: true })
     name: string;
 
@@ -44,7 +50,6 @@ export class OrderItem {
     @Prop({ type: String, default: "" })
     image: string;
 
-    // Price at the time the order is created, calculated by the backend.
     @Prop({ type: Number, required: true, min: 0 })
     price: number;
 
@@ -104,6 +109,22 @@ export class OrderCustomer {
 export const OrderCustomerSchema =
     SchemaFactory.createForClass(OrderCustomer);
 
+// Individual tracking scan received from Shiprocket.
+@Schema({ _id: false })
+export class ShipmentScan {
+    @Prop({ type: String, required: true })
+    date: string;
+
+    @Prop({ type: String, required: true })
+    activity: string;
+
+    @Prop({ type: String, default: "" })
+    location: string;
+}
+
+export const ShipmentScanSchema =
+    SchemaFactory.createForClass(ShipmentScan);
+
 @Schema({
     timestamps: true,
     collection: "orders",
@@ -117,7 +138,6 @@ export class Order {
     })
     orderNumber: string;
 
-    // Set when the customer is logged in.
     @Prop({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
@@ -125,7 +145,6 @@ export class Order {
     })
     userId: Types.ObjectId | null;
 
-    // Set for guest checkout and guest order lookup.
     @Prop({ type: String, default: null, index: true })
     guestId: string | null;
 
@@ -171,7 +190,6 @@ export class Order {
     })
     paymentStatus: PaymentStatus;
 
-    // All monetary values are calculated and validated by the backend.
     @Prop({ type: Number, required: true, min: 0 })
     subtotal: number;
 
@@ -190,8 +208,40 @@ export class Order {
     @Prop({ type: String, default: null })
     paymentId: string | null;
 
-    @Prop({ type: String, default: null })
+    // Existing generic tracking number.
+    @Prop({ type: String, default: null, index: true })
     trackingNumber: string | null;
+
+    // Shiprocket shipment information.
+    @Prop({ type: String, default: null, index: true })
+    awb: string | null;
+
+    @Prop({ type: String, default: null, index: true })
+    shiprocketOrderId: string | null;
+
+    @Prop({ type: String, default: null })
+    shipmentCurrentStatus: string | null;
+
+    @Prop({ type: String, default: null })
+    shipmentStatus: string | null;
+
+    @Prop({ type: Number, default: null })
+    shipmentStatusId: number | null;
+
+    @Prop({ type: String, default: null })
+    courierName: string | null;
+
+    @Prop({ type: Date, default: null })
+    shipmentEtd: Date | null;
+
+    @Prop({ type: Date, default: null })
+    shipmentCurrentTimestamp: Date | null;
+
+    @Prop({
+        type: [ShipmentScanSchema],
+        default: [],
+    })
+    shipmentScans: ShipmentScan[];
 
     @Prop({ type: Date, default: null })
     deliveredAt: Date | null;
@@ -207,6 +257,18 @@ export class Order {
 
     @Prop({ type: Date, default: null })
     reservationExpiresAt: Date | null;
+
+    @Prop({ type: Number, default: 0, min: 0 })
+    refundAmount: number;
+
+    @Prop({ type: String, default: null })
+    razorpayRefundId: string | null;
+
+    @Prop({ type: Date, default: null })
+    refundInitiatedAt: Date | null;
+
+    @Prop({ type: String, default: null })
+    refundGatewayStatus: string | null;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

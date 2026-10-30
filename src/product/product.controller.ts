@@ -240,4 +240,14 @@ export class ProductController {
     async deleteProduct(@Param('id') productId: string) {
         return this.productService.deleteProduct(productId);
     }
+
+    @Get('/info/:id')
+    async getProductById(@Param('id') productId: string) {
+        return await this.productService.getProductById(productId)
+    }
+
+    @Get('/gget/:slug')
+    async getProductBySlug(@Param('id') productId: string) {
+        return await this.productService.getProductById(productId)
+    }
 }

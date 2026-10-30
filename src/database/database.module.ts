@@ -9,6 +9,8 @@ import { LandingPage, LandingPageSchema } from './schema/landingPage.schema';
 import { Cart, CartSchema } from './schema/cart.schema';
 import { Order, OrderSchema } from './schema/order.schema';
 import { Transaction, TransactionSchema } from './schema/transaction.schema';
+import { SupportTicket, SupportTicketSchema } from './schema/support-ticket.schema';
+import { WebhookLog, WebhookLogSchema } from './schema/webhookLos.schema';
 
 @Module({
   imports: [
@@ -20,7 +22,9 @@ import { Transaction, TransactionSchema } from './schema/transaction.schema';
       { name: LandingPage.name, schema: LandingPageSchema },
       { name: Cart.name, schema: CartSchema },
       { name: Order.name, schema: OrderSchema },
-      { name: Transaction.name, schema: TransactionSchema }
+      { name: Transaction.name, schema: TransactionSchema },
+      { name: SupportTicket.name, schema: SupportTicketSchema },
+      { name: WebhookLog.name, schema: WebhookLogSchema }
     ])
   ],
   providers: [DatabaseService],

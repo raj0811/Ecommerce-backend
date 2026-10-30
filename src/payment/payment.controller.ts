@@ -7,16 +7,50 @@ import {
     HttpCode,
     HttpStatus,
     Post,
+    Query,
     Req,
     Res,
+    UseGuards,
 } from "@nestjs/common";
 import { PaymentService } from "./payment.service";
 import { DatabaseService } from "src/database/database.service";
 import { TransactionStatus } from "src/database/schema/transaction.schema";
+import { AdminAuthGuard } from "src/Guards/admin.AuthGuard";
+import * as jwt from 'jsonwebtoken'
+import { CartService } from "src/cart/cart.service";
 
 type CheckoutItemDto = {
     product_id: string;
     qty: number;
+};
+
+type CheckoutInput = {
+    checkoutRequestId: string;
+    items: CheckoutItemDto[];
+    customer: {
+        firstName: string;
+        lastName: string;
+        email: string;
+        phone: string;
+    };
+    shippingAddress: {
+        address: string;
+        apartment?: string;
+        city: string;
+        state: string;
+        pincode: string;
+        country?: string;
+    };
+    billingAddress?: {
+        address: string;
+        apartment?: string;
+        city: string;
+        state: string;
+        pincode: string;
+        country?: string;
+    };
+    userId?: string;
+    guestId?: string;
 };
 
 type CheckoutDto = {
@@ -44,6 +78,8 @@ type CheckoutDto = {
         pincode: string;
         country?: string;
     };
+    userId?: string,
+    guestId?: string
 };
 
 type VerifyPaymentDto = {
@@ -56,13 +92,59 @@ type VerifyPaymentDto = {
 export class PaymentController {
     constructor(
         private readonly paymentService: PaymentService,
-        private readonly databaseService: DatabaseService
+        private readonly databaseService: DatabaseService,
+        private readonly cartService: CartService
     ) { }
 
     @Post("create-order")
     @HttpCode(HttpStatus.CREATED)
-    async createOrder(@Body() body: CheckoutDto) {
-        return this.paymentService.processOrder(body);
+    async createOrder(
+        @Body() body: CheckoutDto,
+        @Req() request: any,
+    ) {
+        const authHeader = request.headers.authorization;
+
+        let userId: string | undefined;
+
+        if (authHeader?.startsWith("Bearer ")) {
+            const token = authHeader.slice(7).trim();
+
+            const payload = jwt.verify(token, process.env.JWT_SECRET);
+
+            userId = payload.id ?? payload._id ?? payload.sub;
+        }
+
+
+        return this.paymentService.processOrder({
+            ...body,
+            userId,
+            guestId: userId ? undefined : body.guestId,
+        });
+    }
+
+    @Post("create-cod-order")
+    @HttpCode(HttpStatus.CREATED)
+    async createCodOrder(
+        @Body() body: CheckoutDto,
+        @Req() request: any,
+    ) {
+        const authHeader = request.headers.authorization;
+
+        let userId: string | undefined;
+
+        if (authHeader?.startsWith("Bearer ")) {
+            const token = authHeader.slice(7).trim();
+
+            const payload = jwt.verify(token, process.env.JWT_SECRET);
+
+            userId = payload.id ?? payload._id ?? payload.sub;
+        }
+
+        return this.paymentService.processCodOrder({
+            ...body,
+            userId,
+            guestId: userId ? undefined : body.guestId,
+        });
     }
 
     @Post("verify")
@@ -258,9 +340,15 @@ export class PaymentController {
                         },
                     );
                 }
+                try {
 
+                    await this.cartService.clearCart(transaction.userId?.toString())
+                } catch (e) {
+                    console.log("keeping cart for guest");
+
+                }
                 return res.redirect(
-                    `${frontendUrl}/order-success/${transaction.orderId}`,
+                    `${frontendUrl}/payment-success/${transaction.orderId}`,
                 );
             }
 
@@ -274,5 +362,141 @@ export class PaymentController {
                 `${frontendUrl}/payment-pending`,
             );
         }
+    }
+
+
+    @Post('webhook')
+    async webhook(@Req() req: any, @Body() body: any) {
+        console.log('Razorpay webhook received:', body);
+
+        await this.databaseService.webhookLogModel.create({
+            log: JSON.stringify(body),
+        });
+
+        if (body.event !== 'payment.captured') {
+            return { received: true };
+        }
+
+        const payment = body.payload?.payment?.entity;
+
+        if (!payment) {
+            return { received: true, message: 'Payment payload missing' };
+        }
+
+        const orderId = payment.notes?.orderId;
+        const paymentId = payment.id;
+
+        if (!orderId || !paymentId) {
+            return { received: true, message: 'Order ID or payment ID missing' };
+        }
+
+        const transaction =
+            await this.databaseService.transactionModel.findOne({
+                gatewayOrderId: payment.order_id,
+            });
+
+        if (!transaction) {
+            console.error('Transaction not found for gateway order:', payment.order_id);
+            return { received: true, message: 'Transaction not found' };
+        }
+
+        // Idempotency: don't process a successful transaction again.
+        if (transaction.status !== TransactionStatus.SUCCESS) {
+            transaction.status = TransactionStatus.SUCCESS;
+            transaction.gatewayPaymentId = paymentId;
+            transaction.paidAt = new Date(payment.created_at * 1000);
+
+            await transaction.save();
+
+            await this.databaseService.orderModel.findByIdAndUpdate(
+                transaction.orderId,
+                {
+                    paymentStatus: 'PAID',
+                    paymentId,
+                },
+            );
+
+            try {
+                await this.cartService.clearCart(
+                    transaction.userId?.toString(),
+                );
+            } catch (error) {
+                console.log('Could not clear cart:', error);
+            }
+        }
+
+        return { received: true };
+    }
+
+    @Post('/refund/webhook')
+    async refundWebhook(@Req() req: any, @Body() body: any) {
+        await this.databaseService.webhookLogModel.create({
+            log: JSON.stringify(body),
+            event: body.event,
+        });
+
+        const event = body.event;
+        const payment = body.payload?.payment?.entity;
+        const refund = body.payload?.refund?.entity;
+
+        if (!payment || !refund) {
+            return { received: true, message: 'Invalid refund payload' };
+        }
+
+        // Log refund.created, but update records only after processing.
+        if (event !== 'refund.processed' || refund.status !== 'processed') {
+            return { received: true, message: 'Refund event logged' };
+        }
+
+        const transaction =
+            await this.databaseService.transactionModel.findOne({
+                gatewayOrderId: payment.order_id,
+            });
+
+        if (!transaction) {
+            console.error(
+                'Transaction not found for Razorpay order:',
+                payment.order_id,
+            );
+
+            return { received: true, message: 'Transaction not found' };
+        }
+
+        // Update the transaction.
+        transaction.status = TransactionStatus.REFUNDED;
+        await transaction.save();
+
+        // Update the associated order.
+        await this.databaseService.orderModel.findByIdAndUpdate(
+            transaction.orderId,
+            {
+                paymentStatus: 'REFUNDED',
+            },
+        );
+
+        return { received: true, message: 'Refund processed successfully' };
+    }
+
+
+    @Get('/transactions')
+    @UseGuards(AdminAuthGuard)
+    getAllTransactions(
+        @Query("page") page?: string,
+        @Query("limit") limit?: string,
+        @Query("status") status?: string,
+        @Query("paymentMethod") paymentMethod?: string,
+        @Query("search") search?: string,
+        @Query("startDate") startDate?: string,
+        @Query("endDate") endDate?: string,
+    ) {
+        return this.paymentService.getAllTransactions({
+            page,
+            limit,
+            status,
+            paymentMethod,
+            search,
+            startDate,
+            endDate,
+        });
     }
 }

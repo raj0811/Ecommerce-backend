@@ -10,42 +10,85 @@ import {
     Patch,
     Post,
     Req,
+    UnauthorizedException,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import * as jwt from 'jsonwebtoken'
 import { CartService } from './cart.service';
 
-type AuthenticatedRequest = Request & {
-    user?: {
-        id?: string;
-        _id?: string;
-    };
+type JwtPayload = {
+    id?: string;
+    sub?: string;
+    _id?: string;
 };
+
+type AuthenticatedRequest = Request;
 
 @Controller('cart')
 export class CartController {
-    constructor(private readonly cartService: CartService) { }
+    constructor(
+        private readonly cartService: CartService,
+    ) { }
 
-    private getIdentity(
+    private async getIdentity(
         request: AuthenticatedRequest,
         guestId?: string,
-    ) {
-        const userId = request.user?.id ?? request.user?._id;
+    ): Promise<{ userId?: string; guestId?: string }> {
+        const authorization = request.headers.authorization;
 
-        if (!userId && !guestId) {
+        // If a token is provided, it must be valid.
+        if (authorization) {
+            const [scheme, token] = authorization.split(' ');
+
+            if (scheme !== 'Bearer' || !token) {
+                throw new UnauthorizedException('Invalid authorization header');
+            }
+
+            try {
+                const payload = await jwt.verify<JwtPayload>(
+                    token, process.env.JWT_SECRET,
+
+                );
+
+                const userId = payload.id ?? payload._id ?? payload.sub;
+                console.log(userId);
+
+                if (!userId) {
+                    throw new UnauthorizedException(
+                        'User ID missing from access token',
+                    );
+                }
+
+                // Authenticated requests always use the verified JWT identity.
+                return { userId };
+            } catch (error) {
+                console.log(error);
+
+                if (error instanceof UnauthorizedException) {
+                    throw error;
+                }
+
+                throw new UnauthorizedException('Invalid or expired access token');
+            }
+        }
+        console.log('no auth');
+
+        // No token: allow guest cart requests.
+        if (!guestId?.trim()) {
             throw new BadRequestException(
                 'x-guest-id header is required for guest carts',
             );
         }
 
-        return { userId, guestId };
+        return { guestId: guestId.trim() };
     }
 
     @Get()
-    getCart(
+    async getCart(
         @Req() request: AuthenticatedRequest,
         @Headers('x-guest-id') guestId?: string,
     ) {
-        const identity = this.getIdentity(request, guestId);
+        const identity = await this.getIdentity(request, guestId);
 
         return this.cartService.getCart(
             identity.userId,
@@ -54,29 +97,47 @@ export class CartController {
     }
 
     @Post('items')
-    addItem(
+    async addItem(
         @Body() body: { productId: string; quantity?: number },
         @Req() request: AuthenticatedRequest,
         @Headers('x-guest-id') guestId?: string,
     ) {
-        const identity = this.getIdentity(request, guestId);
+        if (!body.productId?.trim()) {
+            throw new BadRequestException('productId is required');
+        }
+
+        const quantity = body.quantity ?? 1;
+
+        if (!Number.isInteger(quantity) || quantity < 1) {
+            throw new BadRequestException(
+                'quantity must be a positive integer',
+            );
+        }
+
+        const identity = await this.getIdentity(request, guestId);
 
         return this.cartService.addItem(
             body.productId,
-            body.quantity ?? 1,
+            quantity,
             identity.userId,
             identity.guestId,
         );
     }
 
     @Patch('items/:productId')
-    updateItemQuantity(
+    async updateItemQuantity(
         @Param('productId') productId: string,
         @Body() body: { quantity: number },
         @Req() request: AuthenticatedRequest,
         @Headers('x-guest-id') guestId?: string,
     ) {
-        const identity = this.getIdentity(request, guestId);
+        if (!Number.isInteger(body.quantity) || body.quantity < 1) {
+            throw new BadRequestException(
+                'quantity must be a positive integer',
+            );
+        }
+
+        const identity = await this.getIdentity(request, guestId);
 
         return this.cartService.updateItemQuantity(
             productId,
@@ -87,12 +148,12 @@ export class CartController {
     }
 
     @Delete('items/:productId')
-    removeItem(
+    async removeItem(
         @Param('productId') productId: string,
         @Req() request: AuthenticatedRequest,
         @Headers('x-guest-id') guestId?: string,
     ) {
-        const identity = this.getIdentity(request, guestId);
+        const identity = await this.getIdentity(request, guestId);
 
         return this.cartService.removeItem(
             productId,
@@ -102,11 +163,11 @@ export class CartController {
     }
 
     @Delete()
-    clearCart(
+    async clearCart(
         @Req() request: AuthenticatedRequest,
         @Headers('x-guest-id') guestId?: string,
     ) {
-        const identity = this.getIdentity(request, guestId);
+        const identity = await this.getIdentity(request, guestId);
 
         return this.cartService.clearCart(
             identity.userId,

@@ -14,6 +14,10 @@ import { LandingPageModule } from './landin-page/landin-page.module';
 import { CartModule } from './cart/cart.module';
 import { PaymentModule } from './payment/payment.module';
 import { OrderModule } from './order/order.module';
+import { ShipRocketModule } from './ship-rocket/ship-rocket.module';
+import { SupportTicketModule } from './support-ticket/support-ticket.module';
+import { MailerModule } from './mailer/mailer.module';
+import { WhatsappModule } from './whatsapp/whatsapp.module';
 
 @Module({
   imports: [
@@ -31,7 +35,11 @@ import { OrderModule } from './order/order.module';
     LandingPageModule,
     CartModule,
     PaymentModule,
-    OrderModule
+    OrderModule,
+    ShipRocketModule,
+    SupportTicketModule,
+    MailerModule,
+    WhatsappModule
   ],
   controllers: [AppController, AdminController],
   providers: [AppService],

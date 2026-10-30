@@ -20,15 +20,15 @@ export class LandingPageController {
     ) { }
 
     // Public: fetch published homepage content.
-    @Get('public')
-    async getHomepage() {
-        return this.landingPageService.getPublishedLandingPage('home');
-    }
+    // @Get('public')
+    // async getHomepage() {
+    //     return this.landingPageService.getPublishedLandingPage('home');
+    // }
 
     // Public: fetch a published page by slug.
     @Get('public/:slug')
-    async getPublishedPage(@Param('slug') slug: string) {
-        return this.landingPageService.getPublishedLandingPage(slug);
+    async getPublishedLandingPage(@Param('slug') slug: string) {
+        return this.landingPageService.getPublishedLandingPageBySlug(slug);
     }
 
     // Admin: create a landing page.
@@ -37,14 +37,28 @@ export class LandingPageController {
     async createLandingPage(
         @Body()
         body: {
-            title: string;
+            title?: string;
             slug?: string;
+            productId: string;
             isPublished?: boolean;
             sections?: Record<string, any>[];
+            content?: {
+                heading?: string;
+                tagline?: string;
+                description?: string;
+                subheading?: string;
+                ctaText?: string;
+                ctaLink?: string;
+                highlights?: string[];
+                benefits?: string[];
+                heroImage?: string;
+                bannerImage?: string;
+            };
             seo?: {
                 metaTitle?: string;
                 metaDescription?: string;
                 ogImage?: string;
+                keywords?: string[];
             };
         },
     ) {
@@ -74,12 +88,26 @@ export class LandingPageController {
         body: {
             title?: string;
             slug?: string;
+            productId?: string;
             isPublished?: boolean;
             sections?: Record<string, any>[];
+            content?: {
+                heading?: string;
+                tagline?: string;
+                description?: string;
+                subheading?: string;
+                ctaText?: string;
+                ctaLink?: string;
+                highlights?: string[];
+                benefits?: string[];
+                heroImage?: string;
+                bannerImage?: string;
+            };
             seo?: {
                 metaTitle?: string;
                 metaDescription?: string;
                 ogImage?: string;
+                keywords?: string[];
             };
         },
     ) {

@@ -6,19 +6,33 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Types } from 'mongoose';
 import { DatabaseService } from 'src/database/database.service';
 
 
 interface LandingPageParams {
     slug?: string;
     title?: string;
+    productId?: string;
     isPublished?: boolean;
     sections?: Record<string, any>[];
+    content?: {
+        heading?: string;
+        tagline?: string;
+        description?: string;
+        subheading?: string;
+        ctaText?: string;
+        ctaLink?: string;
+        highlights?: string[];
+        benefits?: string[];
+        heroImage?: string;
+        bannerImage?: string;
+    };
     seo?: {
         metaTitle?: string;
         metaDescription?: string;
         ogImage?: string;
+        keywords?: string[];
     };
 }
 
@@ -40,8 +54,10 @@ export class LandingPageService {
         const {
             title,
             slug,
+            productId,
             isPublished = false,
             sections = [],
+            content = {},
             seo = {},
         } = params;
 
@@ -49,10 +65,24 @@ export class LandingPageService {
             throw new BadRequestException('Page title is required');
         }
 
+        if (!productId) {
+            throw new BadRequestException('Product ID is required');
+        }
+
         if (!Array.isArray(sections)) {
-            throw new BadRequestException(
-                'Sections must be an array',
-            );
+            throw new BadRequestException('Sections must be an array');
+        }
+
+        if (!Types.ObjectId.isValid(productId)) {
+            throw new BadRequestException('Invalid product ID');
+        }
+
+        const product = await this.databaseService.productModel
+            .findById(productId)
+            .exec();
+
+        if (!product) {
+            throw new NotFoundException('Product not found');
         }
 
         const pageSlug = this.generateSlug(slug || title);
@@ -61,9 +91,12 @@ export class LandingPageService {
             throw new BadRequestException('Invalid landing page slug');
         }
 
-        const existing = await this.databaseService.landingPageModel.findOne({
-            slug: pageSlug,
-        }).exec();
+        const existing = await this.databaseService.landingPageModel
+            .findOne({
+                slug: pageSlug,
+                isDeleted: false,
+            })
+            .exec();
 
         if (existing) {
             throw new ConflictException(
@@ -74,6 +107,8 @@ export class LandingPageService {
         return this.databaseService.landingPageModel.create({
             title: title.trim(),
             slug: pageSlug,
+            productId: new Types.ObjectId(productId),
+            content,
             isPublished,
             isDeleted: false,
             sections,
@@ -82,27 +117,22 @@ export class LandingPageService {
     }
 
     // Public storefront: only published, non-deleted pages.
-    async getPublishedLandingPage(slug = 'home') {
+    async getPublishedLandingPageBySlug(slug: string) {
         const page = await this.databaseService.landingPageModel
             .findOne({
-                slug: this.generateSlug(slug),
+                slug: slug.trim().toLowerCase(),
                 isPublished: true,
                 isDeleted: false,
             })
-            .select('-__v -isDeleted')
+            .populate('productId')
             .lean()
             .exec();
 
         if (!page) {
-            throw new NotFoundException(
-                'Published landing page not found',
-            );
+            throw new NotFoundException('Landing page not found');
         }
 
-        return {
-            success: true,
-            data: page,
-        };
+        return page;
     }
 
     // Admin: list all non-deleted landing pages.
