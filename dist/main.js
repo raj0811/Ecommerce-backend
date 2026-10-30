@@ -40,10 +40,13 @@ async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.enableCors({
         origin: [
+            'https://ecommerce-frontend-umber-alpha.vercel.app',
             'http://localhost:3000',
-            'https://ecommerce-frontend-umber-alpha.vercel.app'
         ],
+        methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true,
+        optionsSuccessStatus: 204,
     });
     app.use(express.json({ limit: '10mb' }));
     const port = process.env.PORT ?? 3000;
