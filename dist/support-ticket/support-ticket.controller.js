@@ -39,8 +39,8 @@ let SupportTicketController = class SupportTicketController {
         return this.supportTicketService.createTicket({
             ...body,
             userId,
-            customerName: req.user.name ?? "",
-            customerEmail: req.user.email ?? "",
+            customerName: req.user.name ?? "new user",
+            customerEmail: req.user.email ?? "new user",
         }, this.getActor(req, support_ticket_schema_1.TicketActorType.CUSTOMER));
     }
     async createGuestTicket(body) {

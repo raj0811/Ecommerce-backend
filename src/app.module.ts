@@ -18,6 +18,8 @@ import { ShipRocketModule } from './ship-rocket/ship-rocket.module';
 import { SupportTicketModule } from './support-ticket/support-ticket.module';
 import { MailerModule } from './mailer/mailer.module';
 import { WhatsappModule } from './whatsapp/whatsapp.module';
+import { StatsService } from './stats/stats.service';
+import { StatsModule } from './stats/stats.module';
 
 @Module({
   imports: [
@@ -39,9 +41,10 @@ import { WhatsappModule } from './whatsapp/whatsapp.module';
     ShipRocketModule,
     SupportTicketModule,
     MailerModule,
-    WhatsappModule
+    WhatsappModule,
+    StatsModule
   ],
   controllers: [AppController, AdminController],
-  providers: [AppService],
+  providers: [AppService, StatsService],
 })
 export class AppModule { }

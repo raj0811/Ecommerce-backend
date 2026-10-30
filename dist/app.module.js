@@ -27,6 +27,8 @@ const ship_rocket_module_1 = require("./ship-rocket/ship-rocket.module");
 const support_ticket_module_1 = require("./support-ticket/support-ticket.module");
 const mailer_module_1 = require("./mailer/mailer.module");
 const whatsapp_module_1 = require("./whatsapp/whatsapp.module");
+const stats_service_1 = require("./stats/stats.service");
+const stats_module_1 = require("./stats/stats.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -51,10 +53,11 @@ exports.AppModule = AppModule = __decorate([
             ship_rocket_module_1.ShipRocketModule,
             support_ticket_module_1.SupportTicketModule,
             mailer_module_1.MailerModule,
-            whatsapp_module_1.WhatsappModule
+            whatsapp_module_1.WhatsappModule,
+            stats_module_1.StatsModule
         ],
         controllers: [app_controller_1.AppController, admin_controller_1.AdminController],
-        providers: [app_service_1.AppService],
+        providers: [app_service_1.AppService, stats_service_1.StatsService],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

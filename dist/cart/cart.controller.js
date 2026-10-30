@@ -89,6 +89,7 @@ let CartController = class CartController {
         return this.cartService.getCart(identity.userId, identity.guestId);
     }
     async addItem(body, request, guestId) {
+        console.log('item');
         if (!body.productId?.trim()) {
             throw new common_1.BadRequestException('productId is required');
         }

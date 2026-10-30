@@ -80,8 +80,8 @@ export class SupportTicketController {
             {
                 ...body,
                 userId,
-                customerName: req.user.name ?? "",
-                customerEmail: req.user.email ?? "",
+                customerName: req.user.name ?? "new user",
+                customerEmail: req.user.email ?? "new user",
             },
             this.getActor(req, TicketActorType.CUSTOMER),
         );

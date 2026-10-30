@@ -102,6 +102,8 @@ export class CartController {
         @Req() request: AuthenticatedRequest,
         @Headers('x-guest-id') guestId?: string,
     ) {
+        console.log('item');
+
         if (!body.productId?.trim()) {
             throw new BadRequestException('productId is required');
         }
