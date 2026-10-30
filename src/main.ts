@@ -7,7 +7,7 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'http://localhost:3000',
-      'http://localhost:3001' //chnage with deploy url 
+      'https://ecommerce-frontend-umber-alpha.vercel.app' //chnage with deploy url 
     ],
     credentials: true,
   });
