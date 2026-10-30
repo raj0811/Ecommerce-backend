@@ -1,0 +1,43 @@
+export declare class WhatsappService {
+    sendMessage(to: string, message: string): Promise<any>;
+    sendOrderReceived(data: {
+        phone: string;
+        customerName: string;
+        orderNumber: string;
+        total: number;
+    }): Promise<any>;
+    sendCodOrderConfirmation(data: {
+        phone: string;
+        customerName: string;
+        orderNumber: string;
+        orderId: string;
+        total: number;
+    }): Promise<any>;
+    sendOrderShipped(data: {
+        phone: string;
+        customerName: string;
+        orderNumber: string;
+        trackingUrl: string;
+    }): Promise<any>;
+    sendOrderDelivered(data: {
+        phone: string;
+        customerName: string;
+        orderNumber: string;
+    }): Promise<any>;
+    sendOrderCancelled(data: {
+        phone: string;
+        customerName: string;
+        orderNumber: string;
+    }): Promise<any>;
+    sendReturnInitiated(data: {
+        phone: string;
+        customerName: string;
+        orderNumber: string;
+    }): Promise<any>;
+    sendReturnCompleted(data: {
+        phone: string;
+        customerName: string;
+        orderNumber: string;
+        refundAmount?: number;
+    }): Promise<any>;
+}
