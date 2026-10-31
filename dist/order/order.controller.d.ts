@@ -3,7 +3,7 @@ import { OrderStatus } from "../database/schema/order.schema";
 export declare class OrderController {
     private readonly orderService;
     constructor(orderService: OrderService);
-    getAllOrders(page: number, limit: number, status?: string): Promise<{
+    getAllOrders(req: any, page: number, limit: number, status?: string): Promise<{
         data: {
             paymentDetails: (import("../database/schema/transaction.schema").Transaction & {
                 _id: import("mongoose").Types.ObjectId;
@@ -57,7 +57,7 @@ export declare class OrderController {
             hasPreviousPage: boolean;
         };
     }>;
-    updateOrderStatus(orderId: string, body: {
+    updateOrderStatus(req: any, orderId: string, body: {
         status: OrderStatus;
         trackingNumber?: string;
         refundAmount?: number;
@@ -83,7 +83,7 @@ export declare class OrderController {
             id: string;
         };
     }>;
-    getOrderById(orderId: string): Promise<{
+    getOrderById(orderId: string, req: any): Promise<{
         paymentDetails: (import("../database/schema/transaction.schema").Transaction & {
             _id: import("mongoose").Types.ObjectId;
         } & {

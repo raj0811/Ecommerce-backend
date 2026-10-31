@@ -15,11 +15,13 @@ import {
     Patch,
     Param,
     Delete,
+    ForbiddenException,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { AdminAuthGuard } from 'src/Guards/admin.AuthGuard';
 import { S3BucketService } from 'src/s3-bucket/s3-bucket.service';
 import { ProductService } from './product.service';
+import { AdminRole } from 'src/database/schema/admin.schema';
 
 @Controller('product')
 export class ProductController {
@@ -116,7 +118,6 @@ export class ProductController {
             }
 
             const bucketName = process.env.AWS_S3_BUCKET_NAME;
-            console.log(bucketName);
 
             if (!bucketName) {
                 throw new InternalServerErrorException(
@@ -170,7 +171,19 @@ export class ProductController {
             isActive?: boolean;
             isFeatured?: boolean;
         },
+        @Req() req: any
     ) {
+        const allowedRoles = [
+            AdminRole.SUPER_ADMIN,
+            AdminRole.ADMIN,
+            AdminRole.OPERATIONS,
+        ];
+
+        if (!allowedRoles.includes(req.user?.role)) {
+            throw new ForbiddenException(
+                'You do not have permission to add products',
+            );
+        }
         return this.productService.addProduct({
             name: body.name,
             price: Number(body.price),
@@ -189,6 +202,55 @@ export class ProductController {
         });
     }
 
+
+    @Get('admin/fetch-all-product')
+    @UseGuards(AdminAuthGuard)
+    async getAllProductsAdmins(
+        @Req() req: any,
+        @Query('page', new DefaultValuePipe(1), ParseIntPipe)
+        page: number,
+        @Query('limit', new DefaultValuePipe(12), ParseIntPipe)
+        limit: number,
+        @Query('search')
+        search?: string,
+        @Query('category')
+        category?: string,
+        @Query('minPrice')
+        minPrice?: string,
+        @Query('maxPrice')
+        maxPrice?: string,
+        @Query('inStock', new DefaultValuePipe(false), ParseBoolPipe)
+        inStock?: boolean,
+
+    ) {
+
+        const allowedRoles = [
+            AdminRole.SUPER_ADMIN,
+            AdminRole.ADMIN,
+            AdminRole.OPERATIONS,
+            AdminRole.SALES_SUPPORT
+        ];
+
+        if (!allowedRoles.includes(req.user?.role)) {
+            throw new ForbiddenException(
+                'You do not have permission to add products',
+            );
+        }
+
+        return this.productService.getAllProducts({
+            page,
+            limit,
+            search,
+            category,
+            minPrice:
+                minPrice !== undefined ? Number(minPrice) : undefined,
+            maxPrice:
+                maxPrice !== undefined ? Number(maxPrice) : undefined,
+            inStock,
+        });
+    }
+
+    //Open for guest user to fetch and browse product
     @Get()
     async getAllProducts(
         @Query('page', new DefaultValuePipe(1), ParseIntPipe)
@@ -230,22 +292,49 @@ export class ProductController {
     async updateProduct(
         @Param('id') productId: string,
         @Body() updates: Record<string, any>,
+        @Req() req: any
     ) {
+        const allowedRoles = [
+            AdminRole.SUPER_ADMIN,
+            AdminRole.ADMIN,
+            AdminRole.OPERATIONS,
+        ];
+
+        if (!allowedRoles.includes(req.user?.role)) {
+            throw new ForbiddenException(
+                'You do not have permission to add products',
+            );
+        }
         return this.productService.updateProduct(productId, updates);
     }
 
     // Soft delete product (deactivates product)
     @Delete(':id')
     @UseGuards(AdminAuthGuard)
-    async deleteProduct(@Param('id') productId: string) {
+    async deleteProduct(
+        @Req() req: any,
+        @Param('id') productId: string) {
+        const allowedRoles = [
+            AdminRole.SUPER_ADMIN,
+            AdminRole.ADMIN,
+            AdminRole.OPERATIONS,
+        ];
+
+        if (!allowedRoles.includes(req.user?.role)) {
+            throw new ForbiddenException(
+                'You do not have permission to add products',
+            );
+        }
         return this.productService.deleteProduct(productId);
     }
 
+    //Open route for guest to view product info withouth ogin
     @Get('/info/:id')
     async getProductById(@Param('id') productId: string) {
         return await this.productService.getProductById(productId)
     }
 
+    //Open route for guest to view product info withouth ogin
     @Get('/gget/:slug')
     async getProductBySlug(@Param('id') productId: string) {
         return await this.productService.getProductById(productId)

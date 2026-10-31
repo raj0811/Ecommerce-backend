@@ -111,7 +111,7 @@ export declare class PaymentController {
         received: boolean;
         message: string;
     }>;
-    getAllTransactions(page?: string, limit?: string, status?: string, paymentMethod?: string, search?: string, startDate?: string, endDate?: string): Promise<{
+    getAllTransactions(req: any, page?: string, limit?: string, status?: string, paymentMethod?: string, search?: string, startDate?: string, endDate?: string): Promise<{
         success: boolean;
         data: (import("src/database/schema/transaction.schema").Transaction & {
             _id: import("mongoose").Types.ObjectId;

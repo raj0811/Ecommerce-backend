@@ -1,6 +1,7 @@
-import { BadRequestException, Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ShipRocketService } from './ship-rocket.service';
 import { AdminAuthGuard } from 'src/Guards/admin.AuthGuard';
+import { DatabaseService } from 'src/database/database.service';
 
 export interface ShiprocketWebhookPayload {
     awb: string | number;
@@ -24,12 +25,25 @@ export interface ShiprocketWebhookPayload {
 @Controller('ship-rocket')
 export class ShipRocketController {
     constructor(
-        private shipRocketService: ShipRocketService
+        private shipRocketService: ShipRocketService,
+        private readonly databaseService: DatabaseService,
     ) { }
 
     @Post('/webhook')
-    async testWebhook(@Body() body: any) {
-        console.log(body);
+    async testWebhook(@Body() body: any, @Req() req: any) {
+
+        try {
+
+            const headers = req.headers;
+            await this.databaseService.webhookLogModel.create({
+                log: JSON.stringify(body),
+                headers: JSON.stringify(headers),
+                event: "Ship Rocket"
+            });
+        } catch (e) {
+            console.log('fail to save logs');
+
+        }
         return true
 
     }

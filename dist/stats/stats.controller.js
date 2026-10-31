@@ -16,22 +16,32 @@ exports.StatsController = void 0;
 const common_1 = require("@nestjs/common");
 const stats_service_1 = require("./stats.service");
 const admin_AuthGuard_1 = require("../Guards/admin.AuthGuard");
+const admin_schema_1 = require("../database/schema/admin.schema");
 let StatsController = class StatsController {
     statsService;
     constructor(statsService) {
         this.statsService = statsService;
     }
-    async getOverview(from, to) {
+    async getOverview(req, from, to) {
+        const allowedRoles = [
+            admin_schema_1.AdminRole.SUPER_ADMIN,
+            admin_schema_1.AdminRole.ADMIN,
+            admin_schema_1.AdminRole.OPERATIONS,
+        ];
+        if (!allowedRoles.includes(req.user?.role)) {
+            throw new common_1.ForbiddenException('You do not have permission to add products');
+        }
         return this.statsService.getOverview(from, to);
     }
 };
 exports.StatsController = StatsController;
 __decorate([
     (0, common_1.Get)('overview'),
-    __param(0, (0, common_1.Query)('from')),
-    __param(1, (0, common_1.Query)('to')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Query)('from')),
+    __param(2, (0, common_1.Query)('to')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [Object, String, String]),
     __metadata("design:returntype", Promise)
 ], StatsController.prototype, "getOverview", null);
 exports.StatsController = StatsController = __decorate([

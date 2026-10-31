@@ -53,6 +53,8 @@ const transaction_schema_1 = require("../database/schema/transaction.schema");
 const admin_AuthGuard_1 = require("../Guards/admin.AuthGuard");
 const jwt = __importStar(require("jsonwebtoken"));
 const cart_service_1 = require("../cart/cart.service");
+const util_1 = require("../utils/util");
+const admin_schema_1 = require("../database/schema/admin.schema");
 let PaymentController = class PaymentController {
     paymentService;
     databaseService;
@@ -126,7 +128,7 @@ let PaymentController = class PaymentController {
             throw new common_1.BadRequestException('Order not found');
         }
         const options = {
-            key: process.env.RZP_API_KEY,
+            key: process.env.RAZORPAY_API_KEY,
             order_id: transaction.gatewayOrderId,
             amount: transaction.amount,
             currency: transaction.currency || 'INR',
@@ -189,7 +191,6 @@ let PaymentController = class PaymentController {
             throw new common_1.BadRequestException("Transaction not found");
         }
         const response = await this.paymentService.checkPaymentStatus(transaction.gatewayOrderId.toString());
-        console.log(response);
         return res.send({
             response
         });
@@ -238,12 +239,23 @@ let PaymentController = class PaymentController {
         }
     }
     async webhook(req, body) {
-        console.log('Razorpay webhook received:', body);
-        const headers = req.headers;
+        const reqHead = req.headers;
         await this.databaseService.webhookLogModel.create({
             log: JSON.stringify(body),
-            headers: JSON.stringify(headers),
+            headers: JSON.stringify(reqHead),
+            event: "payment"
         });
+        const signature = req.headers['x-razorpay-signature'];
+        const rawBody = req.rawBody;
+        const isValid = (0, util_1.verifyWebhookSignature)(rawBody, signature, process.env.RAZORPAY_WEBHOOK_SECRET);
+        if (!isValid) {
+            console.error('Invalid Razorpay webhook signature');
+            throw new common_1.UnauthorizedException('Invalid webhook signature');
+        }
+        console.log('Verified Razorpay webhook received:', body.event);
+        const headers = { ...req.headers };
+        delete headers.authorization;
+        delete headers.cookie;
         if (body.event !== 'payment.captured') {
             return { received: true };
         }
@@ -255,6 +267,13 @@ let PaymentController = class PaymentController {
         const paymentId = payment.id;
         if (!orderId || !paymentId) {
             return { received: true, message: 'Order ID or payment ID missing' };
+        }
+        const response = await this.paymentService.checkPaymentStatus(orderId);
+        const paymentInfo = body.payload?.payment?.entity;
+        if (response.status !== 'paid' ||
+            paymentInfo?.status !== 'captured' ||
+            paymentInfo?.captured !== true) {
+            throw new common_1.BadRequestException('Payment verification failed. Payment is not captured.');
         }
         const transaction = await this.databaseService.transactionModel.findOne({
             gatewayOrderId: payment.order_id,
@@ -282,12 +301,23 @@ let PaymentController = class PaymentController {
         return { received: true };
     }
     async refundWebhook(req, body) {
-        const headers = req.headers;
+        const reqHead = req.headers;
         await this.databaseService.webhookLogModel.create({
             log: JSON.stringify(body),
-            headers: JSON.stringify(headers),
+            headers: JSON.stringify(reqHead),
             event: "refund"
         });
+        const signature = req.headers['x-razorpay-signature'];
+        const rawBody = req.rawBody;
+        const isValid = (0, util_1.verifyWebhookSignature)(rawBody, signature, process.env.RAZORPAY_WEBHOOK_SECRET);
+        if (!isValid) {
+            console.error('Invalid Razorpay webhook signature');
+            throw new common_1.UnauthorizedException('Invalid webhook signature');
+        }
+        console.log('Verified Razorpay webhook received:', body.event);
+        const headers = { ...req.headers };
+        delete headers.authorization;
+        delete headers.cookie;
         const event = body.event;
         const payment = body.payload?.payment?.entity;
         const refund = body.payload?.refund?.entity;
@@ -311,7 +341,15 @@ let PaymentController = class PaymentController {
         });
         return { received: true, message: 'Refund processed successfully' };
     }
-    getAllTransactions(page, limit, status, paymentMethod, search, startDate, endDate) {
+    getAllTransactions(req, page, limit, status, paymentMethod, search, startDate, endDate) {
+        const allowedRoles = [
+            admin_schema_1.AdminRole.SUPER_ADMIN,
+            admin_schema_1.AdminRole.ADMIN,
+            admin_schema_1.AdminRole.FINANCE
+        ];
+        if (!allowedRoles.includes(req.user?.role)) {
+            throw new common_1.ForbiddenException('You do not have permission to add products');
+        }
         return this.paymentService.getAllTransactions({
             page,
             limit,
@@ -394,15 +432,16 @@ __decorate([
 __decorate([
     (0, common_1.Get)('/transactions'),
     (0, common_1.UseGuards)(admin_AuthGuard_1.AdminAuthGuard),
-    __param(0, (0, common_1.Query)("page")),
-    __param(1, (0, common_1.Query)("limit")),
-    __param(2, (0, common_1.Query)("status")),
-    __param(3, (0, common_1.Query)("paymentMethod")),
-    __param(4, (0, common_1.Query)("search")),
-    __param(5, (0, common_1.Query)("startDate")),
-    __param(6, (0, common_1.Query)("endDate")),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Query)("page")),
+    __param(2, (0, common_1.Query)("limit")),
+    __param(3, (0, common_1.Query)("status")),
+    __param(4, (0, common_1.Query)("paymentMethod")),
+    __param(5, (0, common_1.Query)("search")),
+    __param(6, (0, common_1.Query)("startDate")),
+    __param(7, (0, common_1.Query)("endDate")),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String, String, String, String, String]),
+    __metadata("design:paramtypes", [Object, String, String, String, String, String, String, String]),
     __metadata("design:returntype", void 0)
 ], PaymentController.prototype, "getAllTransactions", null);
 exports.PaymentController = PaymentController = __decorate([

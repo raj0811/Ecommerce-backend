@@ -69,5 +69,6 @@ export declare class MailerService implements OnModuleInit {
     sendReturnInitiated(order: ReturnMailData): Promise<nodemailer.SentMessageInfo>;
     sendReturnCompleted(order: ReturnMailData): Promise<nodemailer.SentMessageInfo>;
     sendRefundCompleted(order: RefundMailData): Promise<nodemailer.SentMessageInfo>;
+    sendOtp(email: string, otp: string): Promise<boolean>;
 }
 export {};

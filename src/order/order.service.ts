@@ -3,6 +3,7 @@ import {
     BadRequestException,
     Injectable,
     NotFoundException,
+    UnauthorizedException,
 } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { Types } from 'mongoose';
@@ -286,7 +287,7 @@ export class OrderService {
     /**
      * Get a single order with addresses and payment transaction history.
      */
-    async getOrderById(orderId: string) {
+    async getOrderById(orderId: string, userId: string) {
         if (!Types.ObjectId.isValid(orderId)) {
             throw new BadRequestException('Invalid order ID.');
         }
@@ -296,8 +297,13 @@ export class OrderService {
             .lean()
             .exec();
 
+
         if (!order) {
             throw new NotFoundException('Order not found.');
+        }
+
+        if (order.userId?.toString() !== userId) {
+            throw new UnauthorizedException("You Are Not Allowed to Access This Order")
         }
 
         const transactions = await this.databaseService.transactionModel

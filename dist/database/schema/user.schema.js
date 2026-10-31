@@ -45,12 +45,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserSchema = exports.User = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
 const bcrypt = __importStar(require("bcrypt"));
+const customer_schema_1 = require("./customer.schema");
 let User = class User {
     _id;
     name;
     email;
     number;
     password;
+    twoFactorEnabled;
+    addresses;
 };
 exports.User = User;
 __decorate([
@@ -83,6 +86,20 @@ __decorate([
     }),
     __metadata("design:type", String)
 ], User.prototype, "password", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        type: Boolean,
+        default: false,
+    }),
+    __metadata("design:type", Boolean)
+], User.prototype, "twoFactorEnabled", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        type: [customer_schema_1.CustomerAddressSchema],
+        default: [],
+    }),
+    __metadata("design:type", Array)
+], User.prototype, "addresses", void 0);
 exports.User = User = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], User);

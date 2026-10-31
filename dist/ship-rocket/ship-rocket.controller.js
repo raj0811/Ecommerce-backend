@@ -16,13 +16,26 @@ exports.ShipRocketController = void 0;
 const common_1 = require("@nestjs/common");
 const ship_rocket_service_1 = require("./ship-rocket.service");
 const admin_AuthGuard_1 = require("../Guards/admin.AuthGuard");
+const database_service_1 = require("../database/database.service");
 let ShipRocketController = class ShipRocketController {
     shipRocketService;
-    constructor(shipRocketService) {
+    databaseService;
+    constructor(shipRocketService, databaseService) {
         this.shipRocketService = shipRocketService;
+        this.databaseService = databaseService;
     }
-    async testWebhook(body) {
-        console.log(body);
+    async testWebhook(body, req) {
+        try {
+            const headers = req.headers;
+            await this.databaseService.webhookLogModel.create({
+                log: JSON.stringify(body),
+                headers: JSON.stringify(headers),
+                event: "Ship Rocket"
+            });
+        }
+        catch (e) {
+            console.log('fail to save logs');
+        }
         return true;
     }
     async getOrders(page, perPage, sort, sortBy, from, to, filterBy, filter, search) {
@@ -71,8 +84,9 @@ exports.ShipRocketController = ShipRocketController;
 __decorate([
     (0, common_1.Post)('/webhook'),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], ShipRocketController.prototype, "testWebhook", null);
 __decorate([
@@ -100,6 +114,7 @@ __decorate([
 ], ShipRocketController.prototype, "trackOrder", null);
 exports.ShipRocketController = ShipRocketController = __decorate([
     (0, common_1.Controller)('ship-rocket'),
-    __metadata("design:paramtypes", [ship_rocket_service_1.ShipRocketService])
+    __metadata("design:paramtypes", [ship_rocket_service_1.ShipRocketService,
+        database_service_1.DatabaseService])
 ], ShipRocketController);
 //# sourceMappingURL=ship-rocket.controller.js.map

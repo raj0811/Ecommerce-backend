@@ -74,7 +74,7 @@ export declare class OrderService {
             id: string;
         };
     }>;
-    getOrderById(orderId: string): Promise<{
+    getOrderById(orderId: string, userId: string): Promise<{
         paymentDetails: (import("../database/schema/transaction.schema").Transaction & {
             _id: Types.ObjectId;
         } & {

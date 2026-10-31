@@ -7,9 +7,10 @@ import { AdminModule } from 'src/admin/admin.module';
 import { CartModule } from 'src/cart/cart.module';
 import { WhatsappModule } from 'src/whatsapp/whatsapp.module';
 import { WhatsappService } from 'src/whatsapp/whatsapp.service';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
-  imports: [DatabaseModule, AdminModule, CartModule, WhatsappModule],
+  imports: [DatabaseModule, AdminModule, CartModule, WhatsappModule, UserModule],
   providers: [PaymentService, AdminAuthGuard],
   controllers: [PaymentController]
 })

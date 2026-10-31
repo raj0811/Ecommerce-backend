@@ -203,7 +203,7 @@ let OrderService = class OrderService {
             order,
         };
     }
-    async getOrderById(orderId) {
+    async getOrderById(orderId, userId) {
         if (!mongoose_1.Types.ObjectId.isValid(orderId)) {
             throw new common_1.BadRequestException('Invalid order ID.');
         }
@@ -213,6 +213,9 @@ let OrderService = class OrderService {
             .exec();
         if (!order) {
             throw new common_1.NotFoundException('Order not found.');
+        }
+        if (order.userId?.toString() !== userId) {
+            throw new common_1.UnauthorizedException("You Are Not Allowed to Access This Order");
         }
         const transactions = await this.databaseService.transactionModel
             .find({ orderId: order._id })

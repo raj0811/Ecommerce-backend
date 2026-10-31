@@ -3,6 +3,7 @@ import {
     BadRequestException,
     Body,
     Controller,
+    ForbiddenException,
     Get,
     HttpCode,
     HttpStatus,
@@ -10,6 +11,7 @@ import {
     Query,
     Req,
     Res,
+    UnauthorizedException,
     UseGuards,
 } from "@nestjs/common";
 import { PaymentService } from "./payment.service";
@@ -18,6 +20,8 @@ import { TransactionStatus } from "src/database/schema/transaction.schema";
 import { AdminAuthGuard } from "src/Guards/admin.AuthGuard";
 import * as jwt from 'jsonwebtoken'
 import { CartService } from "src/cart/cart.service";
+import { verifyWebhookSignature } from "src/utils/util";
+import { AdminRole } from "src/database/schema/admin.schema";
 
 type CheckoutItemDto = {
     product_id: string;
@@ -201,7 +205,7 @@ export class PaymentController {
         }
 
         const options = {
-            key: process.env.RZP_API_KEY,
+            key: process.env.RAZORPAY_API_KEY,
             order_id: transaction.gatewayOrderId,
             amount: transaction.amount, // Must be in paise
             currency: transaction.currency || 'INR',
@@ -275,7 +279,6 @@ export class PaymentController {
         }
 
         const response = await this.paymentService.checkPaymentStatus(transaction.gatewayOrderId.toString())
-        console.log(response);
 
         return res.send({
             response
@@ -367,12 +370,37 @@ export class PaymentController {
 
     @Post('webhook')
     async webhook(@Req() req: any, @Body() body: any) {
-        console.log('Razorpay webhook received:', body);
-        const headers = req.headers;
+        const reqHead = req.headers;
         await this.databaseService.webhookLogModel.create({
             log: JSON.stringify(body),
-            headers: JSON.stringify(headers),
+            headers: JSON.stringify(reqHead),
+            event: "payment"
         });
+        const signature = req.headers['x-razorpay-signature'];
+        const rawBody = req.rawBody;
+
+        const isValid = verifyWebhookSignature(
+            rawBody,
+            signature,
+            process.env.RAZORPAY_WEBHOOK_SECRET!
+        );
+
+        if (!isValid) {
+            console.error('Invalid Razorpay webhook signature');
+
+            throw new UnauthorizedException(
+                'Invalid webhook signature',
+            );
+        }
+
+        console.log('Verified Razorpay webhook received:', body.event);
+
+        // 2. Log verified webhook
+        const headers = { ...req.headers };
+
+        // Avoid storing sensitive headers
+        delete headers.authorization;
+        delete headers.cookie;
 
         if (body.event !== 'payment.captured') {
             return { received: true };
@@ -390,6 +418,26 @@ export class PaymentController {
         if (!orderId || !paymentId) {
             return { received: true, message: 'Order ID or payment ID missing' };
         }
+
+        // reverifying using status API
+        const response =
+            await this.paymentService.checkPaymentStatus(
+                orderId,
+            );
+
+        const paymentInfo = body.payload?.payment?.entity;
+
+        if (
+            response.status !== 'paid' ||
+            paymentInfo?.status !== 'captured' ||
+            paymentInfo?.captured !== true
+        ) {
+            throw new BadRequestException(
+                'Payment verification failed. Payment is not captured.',
+            );
+        }
+
+        // Payment verified — mark transaction as SUCCESS.
 
         const transaction =
             await this.databaseService.transactionModel.findOne({
@@ -431,12 +479,39 @@ export class PaymentController {
 
     @Post('/refund/webhook')
     async refundWebhook(@Req() req: any, @Body() body: any) {
-        const headers = req.headers;
+        const reqHead = req.headers;
         await this.databaseService.webhookLogModel.create({
             log: JSON.stringify(body),
-            headers: JSON.stringify(headers),
+            headers: JSON.stringify(reqHead),
             event: "refund"
         });
+
+        const signature = req.headers['x-razorpay-signature'];
+        const rawBody = req.rawBody;
+
+        //verifying auth header
+        const isValid = verifyWebhookSignature(
+            rawBody,
+            signature,
+            process.env.RAZORPAY_WEBHOOK_SECRET!,
+        );
+
+        if (!isValid) {
+            console.error('Invalid Razorpay webhook signature');
+
+            throw new UnauthorizedException(
+                'Invalid webhook signature',
+            );
+        }
+
+        console.log('Verified Razorpay webhook received:', body.event);
+
+        // 2. Log verified webhook
+        const headers = { ...req.headers };
+
+        // Avoid storing sensitive headers
+        delete headers.authorization;
+        delete headers.cookie;
 
         const event = body.event;
         const payment = body.payload?.payment?.entity;
@@ -484,6 +559,7 @@ export class PaymentController {
     @Get('/transactions')
     @UseGuards(AdminAuthGuard)
     getAllTransactions(
+        @Req() req: any,
         @Query("page") page?: string,
         @Query("limit") limit?: string,
         @Query("status") status?: string,
@@ -492,6 +568,17 @@ export class PaymentController {
         @Query("startDate") startDate?: string,
         @Query("endDate") endDate?: string,
     ) {
+        const allowedRoles = [
+            AdminRole.SUPER_ADMIN,
+            AdminRole.ADMIN,
+            AdminRole.FINANCE
+        ];
+
+        if (!allowedRoles.includes(req.user?.role)) {
+            throw new ForbiddenException(
+                'You do not have permission to add products',
+            );
+        }
         return this.paymentService.getAllTransactions({
             page,
             limit,

@@ -1,4 +1,5 @@
 import { ShipRocketService } from './ship-rocket.service';
+import { DatabaseService } from "../database/database.service";
 export interface ShiprocketWebhookPayload {
     awb: string | number;
     current_status?: string;
@@ -19,8 +20,9 @@ export interface ShiprocketWebhookPayload {
 }
 export declare class ShipRocketController {
     private shipRocketService;
-    constructor(shipRocketService: ShipRocketService);
-    testWebhook(body: any): Promise<boolean>;
+    private readonly databaseService;
+    constructor(shipRocketService: ShipRocketService, databaseService: DatabaseService);
+    testWebhook(body: any, req: any): Promise<boolean>;
     getOrders(page?: string, perPage?: string, sort?: "ASC" | "DESC", sortBy?: "id" | "status", from?: string, to?: string, filterBy?: string, filter?: string, search?: string): Promise<any>;
     trackOrder(order_id: string): Promise<any>;
 }

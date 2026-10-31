@@ -472,4 +472,64 @@ export class MailerService implements OnModuleInit {
             ),
         );
     }
+
+    async sendOtp(email: string, otp: string): Promise<boolean> {
+        try {
+            await this.transporter.sendMail({
+                from: `"Alpha Male" <${process.env.SMTP_USER}>`,
+                to: email,
+                subject: 'Your Alpha Male Login Verification Code',
+                text: `Your OTP is ${otp}. It is valid for 5 minutes. Do not share this code with anyone.`,
+                html: `
+                    <!DOCTYPE html>
+                    <html>
+                    <body style="margin:0;padding:30px;background:#f5f5f5;font-family:Arial,sans-serif;">
+                        <div style="max-width:500px;margin:auto;background:#ffffff;padding:30px;border-radius:12px;">
+                            <h2 style="color:#111;text-align:center;">
+                                Alpha <span style="color:#ea580c;">Male</span>
+                            </h2>
+
+                            <h3 style="color:#222;">Login Verification</h3>
+
+                            <p style="color:#555;">
+                                Use the following OTP to complete your login.
+                            </p>
+
+                            <div style="background:#fff7ed;padding:20px;text-align:center;border-radius:8px;margin:25px 0;">
+                                <h1 style="letter-spacing:10px;color:#ea580c;margin:0;">
+                                    ${otp}
+                                </h1>
+                            </div>
+
+                            <p style="color:#666;">
+                                This OTP expires in <strong>5 minutes</strong>.
+                            </p>
+
+                            <p style="color:#999;font-size:12px;">
+                                Never share this OTP with anyone. If you did not
+                                request this login, you can safely ignore this email.
+                            </p>
+
+                            <hr style="border:none;border-top:1px solid #eee;margin:25px 0;" />
+
+                            <p style="color:#999;font-size:12px;text-align:center;">
+                                © ${new Date().getFullYear()} Alpha Male. All rights reserved.
+                            </p>
+                        </div>
+                    </body>
+                    </html>
+                `,
+            });
+
+            return true;
+        } catch (error) {
+            console.error('OTP email sending failed:', error);
+
+            throw new InternalServerErrorException(
+                'Unable to send OTP email. Please try again.',
+            );
+        }
+    }
+
+
 }

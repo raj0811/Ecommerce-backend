@@ -26,12 +26,25 @@ export declare class ProductController {
         compareAtPrice?: number | null;
         isActive?: boolean;
         isFeatured?: boolean;
-    }): Promise<import("mongoose").Document<unknown, {}, import("../database/schema/product.schema").Product, {}, import("mongoose").DefaultSchemaOptions> & import("../database/schema/product.schema").Product & {
+    }, req: any): Promise<import("mongoose").Document<unknown, {}, import("../database/schema/product.schema").Product, {}, import("mongoose").DefaultSchemaOptions> & import("../database/schema/product.schema").Product & {
         _id: import("mongoose").Types.ObjectId;
     } & {
         __v: number;
     } & {
         id: string;
+    }>;
+    getAllProductsAdmins(req: any, page: number, limit: number, search?: string, category?: string, minPrice?: string, maxPrice?: string, inStock?: boolean): Promise<{
+        products: (import("../database/schema/product.schema").Product & {
+            _id: import("mongoose").Types.ObjectId;
+        } & {
+            __v: number;
+        })[];
+        pagination: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
     }>;
     getAllProducts(page: number, limit: number, search?: string, category?: string, minPrice?: string, maxPrice?: string, inStock?: boolean): Promise<{
         products: (import("../database/schema/product.schema").Product & {
@@ -50,12 +63,12 @@ export declare class ProductController {
         success: boolean;
         data: any;
     }>;
-    updateProduct(productId: string, updates: Record<string, any>): Promise<import("../database/schema/product.schema").Product & {
+    updateProduct(productId: string, updates: Record<string, any>, req: any): Promise<import("../database/schema/product.schema").Product & {
         _id: import("mongoose").Types.ObjectId;
     } & {
         __v: number;
     }>;
-    deleteProduct(productId: string): Promise<{
+    deleteProduct(req: any, productId: string): Promise<{
         message: string;
         product: import("../database/schema/product.schema").Product & {
             _id: import("mongoose").Types.ObjectId;

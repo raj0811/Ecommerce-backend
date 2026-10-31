@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { UserService } from './user.service';
+import { UpdateUserAddressDto, UserService } from './user.service';
 interface AuthenticatedRequest extends Request {
     user: {
         id: string;
@@ -28,6 +28,12 @@ export declare class UserController {
         password: string;
     }): Promise<{
         message: string;
+        requiresOtp: boolean;
+        challengeToken: any;
+        expiresIn: number;
+    } | {
+        message: string;
+        requiresOtp: boolean;
         accessToken: any;
         user: {
             id: import("mongoose").Types.ObjectId;
@@ -35,6 +41,27 @@ export declare class UserController {
             email: string;
             number: string;
         };
+    }>;
+    verifyLoginOtp(body: {
+        challengeToken: string;
+        otp: string;
+    }): Promise<{
+        message: string;
+        requiresOtp: boolean;
+        accessToken: any;
+        user: {
+            id: import("mongoose").Types.ObjectId;
+            name: string;
+            email: string;
+            number: string;
+        };
+    }>;
+    resendLoginOtp(body: {
+        challengeToken: string;
+    }): Promise<{
+        message: string;
+        requiresOtp: boolean;
+        expiresIn: number;
     }>;
     getUser(userId: string): Promise<import("../database/schema/user.schema").User & Required<{
         _id: import("mongoose").Types.ObjectId;
@@ -45,6 +72,18 @@ export declare class UserController {
         _id: import("mongoose").Types.ObjectId;
     }> & {
         __v: number;
+    }>;
+    addUserAddress(req: any, address: UpdateUserAddressDto): Promise<{
+        message: string;
+        addresses: import("../database/schema/customer.schema").CustomerAddress[];
+    } | {
+        message: string;
+        addresses?: undefined;
+    }>;
+    toogleAuth(req: any): Promise<{
+        success: boolean;
+        message: string;
+        twoFactorEnabled: boolean;
     }>;
 }
 export {};

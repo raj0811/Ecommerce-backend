@@ -8,10 +8,12 @@ import {
     HttpCode,
     HttpStatus,
     Req,
+    UnauthorizedException,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { DatabaseService } from 'src/database/database.service';
 import { OrderService } from 'src/order/order.service';
+import { verifyWebhookSignature } from 'src/utils/util';
 
 @Controller('whatsapp')
 export class WhatsappController {
@@ -19,6 +21,7 @@ export class WhatsappController {
         private readonly databaseService: DatabaseService,
         private readonly ordersService: OrderService
     ) { }
+
     @Get('webhook')
     async verifyWebhook(
         @Query('hub.mode') mode: string,
@@ -27,13 +30,7 @@ export class WhatsappController {
         @Res() res: Response,
         @Body() body: any
     ) {
-        console.log('WhatsApp webhook verification:', {
-            mode,
-            token,
-            tokenReceived: !!token,
-            challenge,
-            body
-        });
+
         try {
 
             await this.databaseService.webhookLogModel.create({
@@ -48,7 +45,6 @@ export class WhatsappController {
             mode === 'subscribe' &&
             token === process.env.VERIFY_TOKEN_WP
         ) {
-            console.log('return');
 
             return res.status(200).send(challenge);
         }
@@ -64,8 +60,21 @@ export class WhatsappController {
         await this.databaseService.webhookLogModel.create({
             log: JSON.stringify(body),
             headers: JSON.stringify(headers),
-            event: "refund"
+            event: "wp"
         });
+
+        // Validating Whatsapp Webhook source
+        const signature = req.headers['x-hub-signature-256'];
+        const isValid = verifyWebhookSignature(
+            req.rawBody,
+            signature,
+            process.env.META_APP_SECRET!,
+            'sha256=',
+        );
+
+        if (!isValid) {
+            throw new UnauthorizedException('Invalid WhatsApp signature');
+        }
         const messages =
             body?.entry?.flatMap((entry: any) =>
                 entry?.changes?.flatMap(
@@ -80,11 +89,6 @@ export class WhatsappController {
             const customerPhone = message.from;
 
             if (!buttonId || !customerPhone) continue;
-
-            console.log("COD button reply:", {
-                buttonId,
-                customerPhone,
-            });
 
             try {
                 const result =

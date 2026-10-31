@@ -18,6 +18,7 @@ const crypto_1 = require("crypto");
 const admin_AuthGuard_1 = require("../Guards/admin.AuthGuard");
 const s3_bucket_service_1 = require("../s3-bucket/s3-bucket.service");
 const product_service_1 = require("./product.service");
+const admin_schema_1 = require("../database/schema/admin.schema");
 let ProductController = class ProductController {
     s3BucketService;
     productService;
@@ -72,7 +73,6 @@ let ProductController = class ProductController {
                 throw new common_1.BadRequestException('Image content does not match its file type');
             }
             const bucketName = process.env.AWS_S3_BUCKET_NAME;
-            console.log(bucketName);
             if (!bucketName) {
                 throw new common_1.InternalServerErrorException('S3 bucket is not configured');
             }
@@ -97,7 +97,15 @@ let ProductController = class ProductController {
             throw new Error(e);
         }
     }
-    async addProduct(body) {
+    async addProduct(body, req) {
+        const allowedRoles = [
+            admin_schema_1.AdminRole.SUPER_ADMIN,
+            admin_schema_1.AdminRole.ADMIN,
+            admin_schema_1.AdminRole.OPERATIONS,
+        ];
+        if (!allowedRoles.includes(req.user?.role)) {
+            throw new common_1.ForbiddenException('You do not have permission to add products');
+        }
         return this.productService.addProduct({
             name: body.name,
             price: Number(body.price),
@@ -114,6 +122,26 @@ let ProductController = class ProductController {
             isFeatured: body.isFeatured,
         });
     }
+    async getAllProductsAdmins(req, page, limit, search, category, minPrice, maxPrice, inStock) {
+        const allowedRoles = [
+            admin_schema_1.AdminRole.SUPER_ADMIN,
+            admin_schema_1.AdminRole.ADMIN,
+            admin_schema_1.AdminRole.OPERATIONS,
+            admin_schema_1.AdminRole.SALES_SUPPORT
+        ];
+        if (!allowedRoles.includes(req.user?.role)) {
+            throw new common_1.ForbiddenException('You do not have permission to add products');
+        }
+        return this.productService.getAllProducts({
+            page,
+            limit,
+            search,
+            category,
+            minPrice: minPrice !== undefined ? Number(minPrice) : undefined,
+            maxPrice: maxPrice !== undefined ? Number(maxPrice) : undefined,
+            inStock,
+        });
+    }
     async getAllProducts(page, limit, search, category, minPrice, maxPrice, inStock) {
         return this.productService.getAllProducts({
             page,
@@ -128,10 +156,26 @@ let ProductController = class ProductController {
     async getDashboardStats() {
         return this.productService.getDashboardStats();
     }
-    async updateProduct(productId, updates) {
+    async updateProduct(productId, updates, req) {
+        const allowedRoles = [
+            admin_schema_1.AdminRole.SUPER_ADMIN,
+            admin_schema_1.AdminRole.ADMIN,
+            admin_schema_1.AdminRole.OPERATIONS,
+        ];
+        if (!allowedRoles.includes(req.user?.role)) {
+            throw new common_1.ForbiddenException('You do not have permission to add products');
+        }
         return this.productService.updateProduct(productId, updates);
     }
-    async deleteProduct(productId) {
+    async deleteProduct(req, productId) {
+        const allowedRoles = [
+            admin_schema_1.AdminRole.SUPER_ADMIN,
+            admin_schema_1.AdminRole.ADMIN,
+            admin_schema_1.AdminRole.OPERATIONS,
+        ];
+        if (!allowedRoles.includes(req.user?.role)) {
+            throw new common_1.ForbiddenException('You do not have permission to add products');
+        }
         return this.productService.deleteProduct(productId);
     }
     async getProductById(productId) {
@@ -155,10 +199,26 @@ __decorate([
     (0, common_1.Post)(),
     (0, common_1.UseGuards)(admin_AuthGuard_1.AdminAuthGuard),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], ProductController.prototype, "addProduct", null);
+__decorate([
+    (0, common_1.Get)('admin/fetch-all-product'),
+    (0, common_1.UseGuards)(admin_AuthGuard_1.AdminAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Query)('page', new common_1.DefaultValuePipe(1), common_1.ParseIntPipe)),
+    __param(2, (0, common_1.Query)('limit', new common_1.DefaultValuePipe(12), common_1.ParseIntPipe)),
+    __param(3, (0, common_1.Query)('search')),
+    __param(4, (0, common_1.Query)('category')),
+    __param(5, (0, common_1.Query)('minPrice')),
+    __param(6, (0, common_1.Query)('maxPrice')),
+    __param(7, (0, common_1.Query)('inStock', new common_1.DefaultValuePipe(false), common_1.ParseBoolPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Number, Number, String, String, String, String, Boolean]),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "getAllProductsAdmins", null);
 __decorate([
     (0, common_1.Get)(),
     __param(0, (0, common_1.Query)('page', new common_1.DefaultValuePipe(1), common_1.ParseIntPipe)),
@@ -184,16 +244,18 @@ __decorate([
     (0, common_1.UseGuards)(admin_AuthGuard_1.AdminAuthGuard),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], ProductController.prototype, "updateProduct", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.UseGuards)(admin_AuthGuard_1.AdminAuthGuard),
-    __param(0, (0, common_1.Param)('id')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], ProductController.prototype, "deleteProduct", null);
 __decorate([

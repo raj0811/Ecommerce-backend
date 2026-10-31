@@ -2,7 +2,7 @@ import { StatsService } from './stats.service';
 export declare class StatsController {
     private readonly statsService;
     constructor(statsService: StatsService);
-    getOverview(from?: string, to?: string): Promise<{
+    getOverview(req: any, from?: string, to?: string): Promise<{
         period: {
             from: Date;
             to: Date;

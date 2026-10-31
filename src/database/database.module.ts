@@ -11,6 +11,7 @@ import { Order, OrderSchema } from './schema/order.schema';
 import { Transaction, TransactionSchema } from './schema/transaction.schema';
 import { SupportTicket, SupportTicketSchema } from './schema/support-ticket.schema';
 import { WebhookLog, WebhookLogSchema } from './schema/webhookLos.schema';
+import { Otp, OtpSchema } from './schema/otp.schema';
 
 @Module({
   imports: [
@@ -24,7 +25,8 @@ import { WebhookLog, WebhookLogSchema } from './schema/webhookLos.schema';
       { name: Order.name, schema: OrderSchema },
       { name: Transaction.name, schema: TransactionSchema },
       { name: SupportTicket.name, schema: SupportTicketSchema },
-      { name: WebhookLog.name, schema: WebhookLogSchema }
+      { name: WebhookLog.name, schema: WebhookLogSchema },
+      { name: Otp.name, schema: OtpSchema }
     ])
   ],
   providers: [DatabaseService],

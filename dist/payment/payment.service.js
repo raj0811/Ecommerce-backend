@@ -21,13 +21,16 @@ const mongoose_1 = require("mongoose");
 const order_schema_1 = require("../database/schema/order.schema");
 const transaction_schema_1 = require("../database/schema/transaction.schema");
 const whatsapp_service_1 = require("../whatsapp/whatsapp.service");
+const user_service_1 = require("../user/user.service");
 let PaymentService = class PaymentService {
     databaseService;
     whatsappService;
+    userService;
     reservationMinutes = 15;
-    constructor(databaseService, whatsappService) {
+    constructor(databaseService, whatsappService, userService) {
         this.databaseService = databaseService;
         this.whatsappService = whatsappService;
+        this.userService = userService;
     }
     generateOrderNumber() {
         return `ORD-${Date.now()}-${(0, crypto_1.randomUUID)()
@@ -229,7 +232,6 @@ let PaymentService = class PaymentService {
             });
         }
         catch (e) {
-            console.log(e);
             throw new common_1.InternalServerErrorException("Payment setup is pending reconciliation. Retry using the same checkoutRequestId.");
         }
         try {
@@ -264,6 +266,24 @@ let PaymentService = class PaymentService {
         catch (e) {
             console.log("failed to send notifications");
         }
+        try {
+            if (userId) {
+                const fullAddress = {
+                    fullName: `${customer.firstName} ${customer.lastName}`,
+                    phone: customer.phone,
+                    addressLine1: shippingAddress.address,
+                    addressLine2: shippingAddress.apartment,
+                    city: shippingAddress.city,
+                    state: shippingAddress.state,
+                    pincode: shippingAddress.pincode,
+                    isDefault: false
+                };
+                await this.userService.updateUserAddress(userId, fullAddress);
+            }
+        }
+        catch (e) {
+            console.log(`error in savin address ${e.message}`);
+        }
         return {
             payment_url: `${process.env.BACKEND_URL}/payments/razorpay-init?transaction_id=${transaction_id}`,
             orderId,
@@ -283,6 +303,24 @@ let PaymentService = class PaymentService {
         const { checkoutRequestId, customer, shippingAddress, billingAddress, userId, guestId, } = input;
         if (!guestId && !userId) {
             throw new common_1.BadRequestException("Invalid user");
+        }
+        try {
+            if (userId) {
+                const fullAddress = {
+                    fullName: `${customer.firstName} ${customer.lastName}`,
+                    phone: customer.phone,
+                    addressLine1: shippingAddress.address,
+                    addressLine2: shippingAddress.apartment,
+                    city: shippingAddress.city,
+                    state: shippingAddress.state,
+                    pincode: shippingAddress.pincode,
+                    isDefault: false
+                };
+                await this.userService.updateUserAddress(userId, fullAddress);
+            }
+        }
+        catch (e) {
+            console.log(`error in savin address ${e.message}`);
         }
         if (!checkoutRequestId ||
             checkoutRequestId.length > 128 ||
@@ -543,19 +581,17 @@ let PaymentService = class PaymentService {
                 url: `https://api.razorpay.com/v1/orders/${razorpay_order_id}`,
                 method: 'get',
                 auth: {
-                    username: process.env.RZP_API_KEY,
-                    password: process.env.RZP_KEY_SECRET
+                    username: process.env.RAZORPAY_API_KEY,
+                    password: process.env.RAZORPAY_KEY_SECRET
                 },
                 headers: {
                     "content-type": "application/json"
                 }
             };
-            console.log(config);
             const response = await axios_1.default.request(config);
             return response.data;
         }
         catch (e) {
-            console.log(e.response.data);
             return e.response.data;
         }
     }
@@ -649,8 +685,8 @@ let PaymentService = class PaymentService {
         return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
     async createRefund(paymentId, amount) {
-        const keyId = process.env.RZP_API_KEY;
-        const keySecret = process.env.RZP_KEY_SECRET;
+        const keyId = process.env.RAZORPAY_API_KEY;
+        const keySecret = process.env.RAZORPAY_KEY_SECRET;
         const payload = {};
         if (amount !== undefined) {
             payload.amount = amount;
@@ -682,6 +718,7 @@ exports.PaymentService = PaymentService;
 exports.PaymentService = PaymentService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
-        whatsapp_service_1.WhatsappService])
+        whatsapp_service_1.WhatsappService,
+        user_service_1.UserService])
 ], PaymentService);
 //# sourceMappingURL=payment.service.js.map

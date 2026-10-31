@@ -2,6 +2,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
+import { CustomerAddress, CustomerAddressSchema } from './customer.schema';
 
 export type UserDocument = User & Document;
 
@@ -35,6 +36,17 @@ export class User {
     })
     password: string;
 
+    @Prop({
+        type: Boolean,
+        default: false,
+    })
+    twoFactorEnabled: boolean;
+
+    @Prop({
+        type: [CustomerAddressSchema],
+        default: [],
+    })
+    addresses: CustomerAddress[];
 
 }
 

@@ -16,6 +16,7 @@ exports.UserController = void 0;
 const common_1 = require("@nestjs/common");
 const user_service_1 = require("./user.service");
 const user_AuthGuard_1 = require("../Guards/user.AuthGuard");
+const throttler_1 = require("@nestjs/throttler");
 let UserController = class UserController {
     userService;
     constructor(userService) {
@@ -25,13 +26,29 @@ let UserController = class UserController {
         return this.userService.registerUser(body.name, body.email, body.password, body.number);
     }
     async loginUser(body) {
-        return this.userService.loginUser(body.email, body.password);
+        return this.userService.loginUserotp(body.email, body.password);
+    }
+    async verifyLoginOtp(body) {
+        return this.userService.verifyLoginOtp(body.challengeToken, body.otp);
+    }
+    async resendLoginOtp(body) {
+        return this.userService.resendLoginOtp(body.challengeToken);
     }
     async getUser(userId) {
         return this.userService.getUser(userId);
     }
     async getMyProfile(req) {
         return this.userService.getUser(req.user.id);
+    }
+    async addUserAddress(req, address) {
+        return this.userService.updateUserAddress(req.user.id, address);
+    }
+    async toogleAuth(req) {
+        const userId = req.user?.id ?? req.user?._id;
+        if (!userId) {
+            throw new common_1.UnauthorizedException('User not authenticated');
+        }
+        return this.userService.toggleTwoFactor(userId);
     }
 };
 exports.UserController = UserController;
@@ -46,13 +63,33 @@ __decorate([
 __decorate([
     (0, common_1.Post)('login'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, throttler_1.Throttle)({ default: { limit: 5, ttl: 60 * 1000 } }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "loginUser", null);
 __decorate([
+    (0, common_1.Post)('verify-otp'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, throttler_1.Throttle)({ default: { limit: 5, ttl: 5 * 60 * 1000 } }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "verifyLoginOtp", null);
+__decorate([
+    (0, common_1.Post)('resend-otp'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, throttler_1.Throttle)({ default: { limit: 3, ttl: 15 * 60 * 1000 } }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "resendLoginOtp", null);
+__decorate([
     (0, common_1.Get)(':userId'),
+    (0, common_1.UseGuards)(user_AuthGuard_1.UserAuthGuard),
     __param(0, (0, common_1.Param)('userId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -67,6 +104,23 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "getMyProfile", null);
+__decorate([
+    (0, common_1.Post)('address'),
+    (0, common_1.UseGuards)(user_AuthGuard_1.UserAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, user_service_1.UpdateUserAddressDto]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "addUserAddress", null);
+__decorate([
+    (0, common_1.Post)('toogle-auth'),
+    (0, common_1.UseGuards)(user_AuthGuard_1.UserAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "toogleAuth", null);
 exports.UserController = UserController = __decorate([
     (0, common_1.Controller)('user'),
     __metadata("design:paramtypes", [user_service_1.UserService])

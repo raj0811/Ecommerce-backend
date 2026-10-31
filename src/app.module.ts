@@ -20,6 +20,8 @@ import { MailerModule } from './mailer/mailer.module';
 import { WhatsappModule } from './whatsapp/whatsapp.module';
 import { StatsService } from './stats/stats.service';
 import { StatsModule } from './stats/stats.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -27,6 +29,13 @@ import { StatsModule } from './stats/stats.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 60 * 1000, // 1 minute
+        limit: 100,     // 100 requests per minute per IP
+      },
+    ]),
     MongooseModule.forRoot(process.env.DB!),
     DatabaseModule,
     UserModule,
@@ -45,6 +54,9 @@ import { StatsModule } from './stats/stats.module';
     StatsModule
   ],
   controllers: [AppController, AdminController],
-  providers: [AppService, StatsService],
+  providers: [AppService, StatsService, {
+    provide: APP_GUARD,
+    useClass: ThrottlerGuard,
+  },],
 })
 export class AppModule { }

@@ -48,31 +48,43 @@ const jwt = __importStar(require("jsonwebtoken"));
 const mongoose_1 = require("mongoose");
 const bcrypt = __importStar(require("bcrypt"));
 const database_service_1 = require("../database/database.service");
+const admin_schema_1 = require("../database/schema/admin.schema");
 let AdminService = class AdminService {
     databaseService;
     constructor(databaseService) {
         this.databaseService = databaseService;
     }
-    async registerAdmin(name, email, number, password) {
+    async registerAdmin(name, email, number, password, role = admin_schema_1.AdminRole.ADMIN) {
         if (!name?.trim() || !email?.trim() || !number?.trim() || !password) {
             throw new common_1.BadRequestException('Name, email, number and password are required');
         }
         if (password.length < 8) {
             throw new common_1.BadRequestException('Password must be at least 8 characters long');
         }
+        if (!Object.values(admin_schema_1.AdminRole).includes(role)) {
+            throw new common_1.BadRequestException('Invalid admin role');
+        }
         const normalizedEmail = email.trim().toLowerCase();
-        try {
-            const existingAdmin = await this.databaseService.adminModel.exists({
-                email: normalizedEmail,
-            });
-            if (existingAdmin) {
+        const normalizedNumber = number.trim();
+        const existingAdmin = await this.databaseService.adminModel.findOne({
+            $or: [
+                { email: normalizedEmail },
+                { number: normalizedNumber },
+            ],
+        });
+        if (existingAdmin) {
+            if (existingAdmin.email === normalizedEmail) {
                 throw new common_1.ConflictException('Admin with this email already exists');
             }
+            throw new common_1.ConflictException('Admin with this phone number already exists');
+        }
+        try {
             const admin = new this.databaseService.adminModel({
                 name: name.trim(),
                 email: normalizedEmail,
                 number: number.trim(),
                 password,
+                role,
             });
             await admin.save();
             return {
@@ -82,18 +94,78 @@ let AdminService = class AdminService {
                     name: admin.name,
                     email: admin.email,
                     number: admin.number,
+                    role: admin.role,
                 },
             };
         }
         catch (error) {
+            if (error?.code === 11000) {
+                throw new common_1.ConflictException("Error in creating Admin");
+            }
             if (error instanceof common_1.BadRequestException ||
                 error instanceof common_1.ConflictException) {
                 throw error;
             }
-            if (error?.code === 11000) {
-                throw new common_1.ConflictException('Admin with this email already exists');
-            }
             throw new common_1.InternalServerErrorException('Failed to register admin');
+        }
+    }
+    async updateAdmin(id, data) {
+        if (!mongoose_1.Types.ObjectId.isValid(id)) {
+            throw new common_1.BadRequestException('Invalid admin ID');
+        }
+        const admin = await this.databaseService.adminModel.findById(id);
+        if (!admin) {
+            throw new common_1.NotFoundException('Admin not found');
+        }
+        if (data.role !== undefined &&
+            !Object.values(admin_schema_1.AdminRole).includes(data.role)) {
+            throw new common_1.BadRequestException('Invalid admin role');
+        }
+        if (data.name !== undefined) {
+            if (!data.name.trim()) {
+                throw new common_1.BadRequestException('Name cannot be empty');
+            }
+            admin.name = data.name.trim();
+        }
+        if (data.email !== undefined) {
+            if (!data.email.trim()) {
+                throw new common_1.BadRequestException('Email cannot be empty');
+            }
+            admin.email = data.email.trim().toLowerCase();
+        }
+        if (data.number !== undefined) {
+            if (!data.number.trim()) {
+                throw new common_1.BadRequestException('Number cannot be empty');
+            }
+            admin.number = data.number.trim();
+        }
+        if (data.password !== undefined) {
+            if (data.password.length < 8) {
+                throw new common_1.BadRequestException('Password must be at least 8 characters long');
+            }
+            admin.password = data.password;
+        }
+        if (data.role !== undefined) {
+            admin.role = data.role;
+        }
+        try {
+            await admin.save();
+            return {
+                message: 'Admin updated successfully',
+                admin: {
+                    id: admin._id,
+                    name: admin.name,
+                    email: admin.email,
+                    number: admin.number,
+                    role: admin.role,
+                },
+            };
+        }
+        catch (error) {
+            if (error?.code === 11000) {
+                throw new common_1.ConflictException('Email already exists');
+            }
+            throw error;
         }
     }
     async loginAdmin(email, password) {
@@ -120,6 +192,7 @@ let AdminService = class AdminService {
                 id: admin._id,
                 name: admin.name,
                 email: admin.email,
+                role: admin.role
             },
         };
     }
@@ -166,6 +239,80 @@ let AdminService = class AdminService {
             }
             throw new common_1.UnauthorizedException('Invalid or expired authentication token');
         }
+    }
+    async getAllAdmins(page = 1, limit = 10, search = '') {
+        page = Math.max(1, Number(page) || 1);
+        limit = Math.min(100, Math.max(1, Number(limit) || 10));
+        const filter = {};
+        if (search?.trim()) {
+            const escapedSearch = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            filter.$or = [
+                { name: { $regex: escapedSearch, $options: 'i' } },
+                { email: { $regex: escapedSearch, $options: 'i' } },
+                { number: { $regex: escapedSearch, $options: 'i' } },
+            ];
+        }
+        const skip = (page - 1) * limit;
+        const [admins, total] = await Promise.all([
+            this.databaseService.adminModel
+                .find(filter)
+                .select('-password')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean()
+                .exec(),
+            this.databaseService.adminModel.countDocuments(filter),
+        ]);
+        return {
+            admins,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+                hasNextPage: page * limit < total,
+                hasPreviousPage: page > 1,
+            },
+        };
+    }
+    async getAdminById(id) {
+        if (!mongoose_1.Types.ObjectId.isValid(id)) {
+            throw new common_1.BadRequestException('Invalid admin ID');
+        }
+        const admin = await this.databaseService.adminModel
+            .findById(id)
+            .select('-password')
+            .lean()
+            .exec();
+        if (!admin) {
+            throw new common_1.NotFoundException('Admin not found');
+        }
+        return admin;
+    }
+    async deleteAdmin(id, currentAdminId) {
+        if (!mongoose_1.Types.ObjectId.isValid(id)) {
+            throw new common_1.BadRequestException('Invalid admin ID');
+        }
+        if (id === currentAdminId) {
+            throw new common_1.BadRequestException('You cannot delete your own account');
+        }
+        const admin = await this.databaseService.adminModel.findById(id);
+        if (!admin) {
+            throw new common_1.NotFoundException('Admin not found');
+        }
+        if (admin.role === admin_schema_1.AdminRole.SUPER_ADMIN) {
+            const superAdminCount = await this.databaseService.adminModel.countDocuments({
+                role: admin_schema_1.AdminRole.SUPER_ADMIN,
+            });
+            if (superAdminCount <= 1) {
+                throw new common_1.BadRequestException('Cannot delete the last super admin');
+            }
+        }
+        await admin.deleteOne();
+        return {
+            message: 'Admin deleted successfully',
+        };
     }
 };
 exports.AdminService = AdminService;

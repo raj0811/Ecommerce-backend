@@ -20,6 +20,7 @@ const order_schema_1 = require("./schema/order.schema");
 const transaction_schema_1 = require("./schema/transaction.schema");
 const support_ticket_schema_1 = require("./schema/support-ticket.schema");
 const webhookLos_schema_1 = require("./schema/webhookLos.schema");
+const otp_schema_1 = require("./schema/otp.schema");
 let DatabaseModule = class DatabaseModule {
 };
 exports.DatabaseModule = DatabaseModule;
@@ -36,7 +37,8 @@ exports.DatabaseModule = DatabaseModule = __decorate([
                 { name: order_schema_1.Order.name, schema: order_schema_1.OrderSchema },
                 { name: transaction_schema_1.Transaction.name, schema: transaction_schema_1.TransactionSchema },
                 { name: support_ticket_schema_1.SupportTicket.name, schema: support_ticket_schema_1.SupportTicketSchema },
-                { name: webhookLos_schema_1.WebhookLog.name, schema: webhookLos_schema_1.WebhookLogSchema }
+                { name: webhookLos_schema_1.WebhookLog.name, schema: webhookLos_schema_1.WebhookLogSchema },
+                { name: otp_schema_1.Otp.name, schema: otp_schema_1.OtpSchema }
             ])
         ],
         providers: [database_service_1.DatabaseService],

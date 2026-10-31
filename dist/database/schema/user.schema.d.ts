@@ -1,4 +1,5 @@
 import { Document, Types } from 'mongoose';
+import { CustomerAddress } from './customer.schema';
 export type UserDocument = User & Document;
 export declare class User {
     _id: Types.ObjectId;
@@ -6,6 +7,8 @@ export declare class User {
     email: string;
     number: string;
     password: string;
+    twoFactorEnabled: boolean;
+    addresses: CustomerAddress[];
 }
 export declare const UserSchema: import("mongoose").Schema<User, import("mongoose").Model<User, any, any, any, any, any, User & Required<{
     _id: Types.ObjectId;
@@ -57,6 +60,24 @@ export declare const UserSchema: import("mongoose").Schema<User, import("mongoos
         id: string;
     }>> | undefined;
     password?: import("mongoose").SchemaDefinitionProperty<string, User, Document<unknown, {}, User, {
+        id: string;
+    }, import("mongoose").DefaultSchemaOptions> & Omit<User & Required<{
+        _id: Types.ObjectId;
+    }> & {
+        __v: number;
+    }, "id"> & import("mongoose").HydratedDocumentOverrides<{
+        id: string;
+    }>> | undefined;
+    twoFactorEnabled?: import("mongoose").SchemaDefinitionProperty<boolean, User, Document<unknown, {}, User, {
+        id: string;
+    }, import("mongoose").DefaultSchemaOptions> & Omit<User & Required<{
+        _id: Types.ObjectId;
+    }> & {
+        __v: number;
+    }, "id"> & import("mongoose").HydratedDocumentOverrides<{
+        id: string;
+    }>> | undefined;
+    addresses?: import("mongoose").SchemaDefinitionProperty<CustomerAddress[], User, Document<unknown, {}, User, {
         id: string;
     }, import("mongoose").DefaultSchemaOptions> & Omit<User & Required<{
         _id: Types.ObjectId;

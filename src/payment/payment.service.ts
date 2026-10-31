@@ -20,6 +20,8 @@ import {
     TransactionStatus,
 } from "src/database/schema/transaction.schema";
 import { WhatsappService } from "src/whatsapp/whatsapp.service";
+import { UserService } from "src/user/user.service";
+import { CustomerAddress } from "aws-sdk/clients/directconnect";
 
 type CheckoutItem = {
     product_id: string;
@@ -61,7 +63,8 @@ export class PaymentService {
 
     constructor(
         private readonly databaseService: DatabaseService,
-        private readonly whatsappService: WhatsappService
+        private readonly whatsappService: WhatsappService,
+        private readonly userService: UserService
     ) { }
 
     generateOrderNumber(): string {
@@ -406,7 +409,6 @@ export class PaymentService {
                 orderNumber,
             });
         } catch (e) {
-            console.log(e);
 
             // Do NOT delete the order or release stock automatically here.
             // A timeout can mean Razorpay created the order but the response was lost.
@@ -459,6 +461,25 @@ export class PaymentService {
             console.log("failed to send notifications");
 
         }
+
+        try {
+            if (userId) {
+                const fullAddress = {
+                    fullName: `${customer.firstName} ${customer.lastName}`,
+                    phone: customer.phone,
+                    addressLine1: shippingAddress.address,
+                    addressLine2: shippingAddress.apartment,
+                    city: shippingAddress.city,
+                    state: shippingAddress.state,
+                    pincode: shippingAddress.pincode,
+                    isDefault: false
+                }
+                await this.userService.updateUserAddress(userId, fullAddress)
+            }
+        } catch (e) {
+            console.log(`error in savin address ${e.message}`);
+
+        }
         return {
             payment_url: `${process.env.BACKEND_URL}/payments/razorpay-init?transaction_id=${transaction_id}`,
             orderId,
@@ -491,6 +512,23 @@ export class PaymentService {
             throw new BadRequestException("Invalid user");
         }
 
+        try {
+            if (userId) {
+                const fullAddress = {
+                    fullName: `${customer.firstName} ${customer.lastName}`,
+                    phone: customer.phone,
+                    addressLine1: shippingAddress.address,
+                    addressLine2: shippingAddress.apartment,
+                    city: shippingAddress.city,
+                    state: shippingAddress.state,
+                    pincode: shippingAddress.pincode,
+                    isDefault: false
+                }
+                await this.userService.updateUserAddress(userId, fullAddress)
+            }
+        } catch (e) {
+            console.log(`error in savin address ${e.message}`);
+        }
         if (
             !checkoutRequestId ||
             checkoutRequestId.length > 128 ||
@@ -557,6 +595,8 @@ export class PaymentService {
                     "This checkout ID has already been used for another payment method.",
                 );
             }
+
+
 
             return {
                 orderId: existingOrder._id,
@@ -799,7 +839,6 @@ export class PaymentService {
                 );
             });
 
-
         // 11. Return COD order details
         return {
             orderId,
@@ -893,19 +932,18 @@ export class PaymentService {
                 url: `https://api.razorpay.com/v1/orders/${razorpay_order_id}`,
                 method: 'get',
                 auth: {
-                    username: process.env.RZP_API_KEY!,
-                    password: process.env.RZP_KEY_SECRET!
+                    username: process.env.RAZORPAY_API_KEY!,
+                    password: process.env.RAZORPAY_KEY_SECRET!
                 },
                 headers: {
                     "content-type": "application/json"
                 }
             }
-            console.log(config);
 
             const response = await axios.request(config);
             return response.data;
         } catch (e) {
-            console.log(e.response.data);
+
             return e.response.data;
         }
     }
@@ -1033,8 +1071,8 @@ export class PaymentService {
     }
 
     async createRefund(paymentId: string, amount?: number) {
-        const keyId = process.env.RZP_API_KEY!;
-        const keySecret = process.env.RZP_KEY_SECRET!;
+        const keyId = process.env.RAZORPAY_API_KEY!;
+        const keySecret = process.env.RAZORPAY_KEY_SECRET!;
 
         const payload: Record<string, any> = {};
 

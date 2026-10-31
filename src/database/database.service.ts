@@ -12,6 +12,7 @@ import { Transaction } from './schema/transaction.schema';
 import { SupportTicket } from './schema/support-ticket.schema';
 import { WebhookLog } from './schema/webhookLos.schema';
 import { Connection } from "mongoose";
+import { Otp } from './schema/otp.schema';
 @Injectable()
 export class DatabaseService {
     constructor(
@@ -36,6 +37,8 @@ export class DatabaseService {
         @InjectModel(SupportTicket.name)
         public readonly supportTicketModel: Model<SupportTicket>,
         @InjectModel(WebhookLog.name)
-        public readonly webhookLogModel: Model<WebhookLog>
+        public readonly webhookLogModel: Model<WebhookLog>,
+        @InjectModel(Otp.name)
+        public readonly otpModel: Model<Otp>
     ) { }
 }

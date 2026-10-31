@@ -16,6 +16,7 @@ exports.WhatsappController = void 0;
 const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const order_service_1 = require("../order/order.service");
+const util_1 = require("../utils/util");
 let WhatsappController = class WhatsappController {
     databaseService;
     ordersService;
@@ -24,13 +25,6 @@ let WhatsappController = class WhatsappController {
         this.ordersService = ordersService;
     }
     async verifyWebhook(mode, token, challenge, res, body) {
-        console.log('WhatsApp webhook verification:', {
-            mode,
-            token,
-            tokenReceived: !!token,
-            challenge,
-            body
-        });
         try {
             await this.databaseService.webhookLogModel.create({
                 log: JSON.stringify({ body, mode, token, challenge }),
@@ -42,7 +36,6 @@ let WhatsappController = class WhatsappController {
         }
         if (mode === 'subscribe' &&
             token === process.env.VERIFY_TOKEN_WP) {
-            console.log('return');
             return res.status(200).send(challenge);
         }
         return res.sendStatus(403);
@@ -52,8 +45,13 @@ let WhatsappController = class WhatsappController {
         await this.databaseService.webhookLogModel.create({
             log: JSON.stringify(body),
             headers: JSON.stringify(headers),
-            event: "refund"
+            event: "wp"
         });
+        const signature = req.headers['x-hub-signature-256'];
+        const isValid = (0, util_1.verifyWebhookSignature)(req.rawBody, signature, process.env.META_APP_SECRET, 'sha256=');
+        if (!isValid) {
+            throw new common_1.UnauthorizedException('Invalid WhatsApp signature');
+        }
         const messages = body?.entry?.flatMap((entry) => entry?.changes?.flatMap((change) => change?.value?.messages ?? [])) ?? [];
         for (const message of messages) {
             if (message.type !== "interactive")
@@ -62,10 +60,6 @@ let WhatsappController = class WhatsappController {
             const customerPhone = message.from;
             if (!buttonId || !customerPhone)
                 continue;
-            console.log("COD button reply:", {
-                buttonId,
-                customerPhone,
-            });
             try {
                 const result = await this.ordersService.handleCodConfirmationReply(customerPhone, buttonId);
                 console.log("COD confirmation result:", result);

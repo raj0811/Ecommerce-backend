@@ -27,6 +27,7 @@ const transaction_schema_1 = require("./schema/transaction.schema");
 const support_ticket_schema_1 = require("./schema/support-ticket.schema");
 const webhookLos_schema_1 = require("./schema/webhookLos.schema");
 const mongoose_3 = require("mongoose");
+const otp_schema_1 = require("./schema/otp.schema");
 let DatabaseService = class DatabaseService {
     connection;
     userModel;
@@ -39,7 +40,8 @@ let DatabaseService = class DatabaseService {
     transactionModel;
     supportTicketModel;
     webhookLogModel;
-    constructor(connection, userModel, adminModel, customerModel, productModel, landingPageModel, cartModel, orderModel, transactionModel, supportTicketModel, webhookLogModel) {
+    otpModel;
+    constructor(connection, userModel, adminModel, customerModel, productModel, landingPageModel, cartModel, orderModel, transactionModel, supportTicketModel, webhookLogModel, otpModel) {
         this.connection = connection;
         this.userModel = userModel;
         this.adminModel = adminModel;
@@ -51,6 +53,7 @@ let DatabaseService = class DatabaseService {
         this.transactionModel = transactionModel;
         this.supportTicketModel = supportTicketModel;
         this.webhookLogModel = webhookLogModel;
+        this.otpModel = otpModel;
     }
 };
 exports.DatabaseService = DatabaseService;
@@ -67,7 +70,9 @@ exports.DatabaseService = DatabaseService = __decorate([
     __param(8, (0, mongoose_1.InjectModel)(transaction_schema_1.Transaction.name)),
     __param(9, (0, mongoose_1.InjectModel)(support_ticket_schema_1.SupportTicket.name)),
     __param(10, (0, mongoose_1.InjectModel)(webhookLos_schema_1.WebhookLog.name)),
+    __param(11, (0, mongoose_1.InjectModel)(otp_schema_1.Otp.name)),
     __metadata("design:paramtypes", [mongoose_3.Connection,
+        mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,

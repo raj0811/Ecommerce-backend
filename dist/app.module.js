@@ -29,6 +29,8 @@ const mailer_module_1 = require("./mailer/mailer.module");
 const whatsapp_module_1 = require("./whatsapp/whatsapp.module");
 const stats_service_1 = require("./stats/stats.service");
 const stats_module_1 = require("./stats/stats.module");
+const throttler_1 = require("@nestjs/throttler");
+const core_1 = require("@nestjs/core");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -39,6 +41,13 @@ exports.AppModule = AppModule = __decorate([
                 isGlobal: true,
                 envFilePath: '.env',
             }),
+            throttler_1.ThrottlerModule.forRoot([
+                {
+                    name: 'default',
+                    ttl: 60 * 1000,
+                    limit: 100,
+                },
+            ]),
             mongoose_1.MongooseModule.forRoot(process.env.DB),
             database_module_1.DatabaseModule,
             user_module_1.UserModule,
@@ -57,7 +66,10 @@ exports.AppModule = AppModule = __decorate([
             stats_module_1.StatsModule
         ],
         controllers: [app_controller_1.AppController, admin_controller_1.AdminController],
-        providers: [app_service_1.AppService, stats_service_1.StatsService],
+        providers: [app_service_1.AppService, stats_service_1.StatsService, {
+                provide: core_1.APP_GUARD,
+                useClass: throttler_1.ThrottlerGuard,
+            },],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map
