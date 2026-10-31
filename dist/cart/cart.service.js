@@ -159,9 +159,8 @@ let CartService = class CartService {
             cart,
         };
     }
-    async getAbandonedCarts() {
-        const carts = await this.databaseService.cartModel
-            .find({
+    async getAbandonedCarts(page = 1, limit = 20) {
+        const filter = {
             userId: {
                 $exists: true,
                 $ne: null,
@@ -170,14 +169,21 @@ let CartService = class CartService {
                 $exists: true,
                 $ne: [],
             },
-        })
-            .populate({
-            path: 'userId',
-            select: 'name number email',
-        })
-            .sort({ updatedAt: -1 })
-            .lean();
-        return carts
+        };
+        const [carts, total] = await Promise.all([
+            this.databaseService.cartModel
+                .find(filter)
+                .populate({
+                path: 'userId',
+                select: 'name number email',
+            })
+                .sort({ updatedAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .lean(),
+            this.databaseService.cartModel.countDocuments(filter),
+        ]);
+        const data = carts
             .filter((cart) => cart.userId)
             .map((cart) => ({
             cartId: cart._id,
@@ -191,6 +197,15 @@ let CartService = class CartService {
             updatedAt: cart.updatedAt,
             createdAt: cart.createdAt,
         }));
+        return {
+            data,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
     }
 };
 exports.CartService = CartService;

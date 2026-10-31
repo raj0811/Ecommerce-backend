@@ -231,41 +231,57 @@ export class CartService {
         };
     }
 
-    async getAbandonedCarts() {
-        const carts = await this.databaseService.cartModel
-            .find({
-                userId: {
-                    $exists: true,
-                    $ne: null,
-                },
-                items: {
-                    $exists: true,
-                    $ne: [],
-                },
-            })
-            .populate({
-                path: 'userId',
-                select: 'name number email',
-            })
-            .sort({ updatedAt: -1 })
-            .lean();
+    // cart.service.ts
+    async getAbandonedCarts(page = 1, limit = 20) {
+        const filter = {
+            userId: {
+                $exists: true,
+                $ne: null,
+            },
+            items: {
+                $exists: true,
+                $ne: [],
+            },
+        };
 
-        return carts
+        const [carts, total] = await Promise.all([
+            this.databaseService.cartModel
+                .find(filter)
+                .populate({
+                    path: 'userId',
+                    select: 'name number email',
+                })
+                .sort({ updatedAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .lean(),
+
+            this.databaseService.cartModel.countDocuments(filter),
+        ]);
+
+        const data = carts
             .filter((cart: any) => cart.userId)
             .map((cart: any) => ({
                 cartId: cart._id,
-
                 user: {
                     userId: cart.userId._id,
                     name: cart.userId.name,
                     number: cart.userId.number,
                     email: cart.userId.email,
                 },
-
                 items: cart.items,
-
                 updatedAt: cart.updatedAt,
                 createdAt: cart.createdAt,
             }));
+
+        return {
+            data,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
     }
 }

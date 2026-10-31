@@ -114,8 +114,10 @@ let CartController = class CartController {
         const identity = await this.getIdentity(request, guestId);
         return this.cartService.clearCart(identity.userId, identity.guestId);
     }
-    async getAbandonedCarts() {
-        return this.cartService.getAbandonedCarts();
+    async getAbandonedCarts(pageQuery, limitQuery) {
+        const page = Math.max(1, parseInt(pageQuery ?? '1', 10) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(limitQuery ?? '20', 10) || 20));
+        return this.cartService.getAbandonedCarts(page, limit);
     }
 };
 exports.CartController = CartController;
@@ -166,8 +168,10 @@ __decorate([
 __decorate([
     (0, common_1.Get)('abandoned'),
     (0, common_1.UseGuards)(admin_AuthGuard_1.AdminAuthGuard),
+    __param(0, (0, common_1.Query)('page')),
+    __param(1, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], CartController.prototype, "getAbandonedCarts", null);
 exports.CartController = CartController = __decorate([

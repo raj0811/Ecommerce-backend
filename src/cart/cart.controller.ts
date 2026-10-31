@@ -9,6 +9,7 @@ import {
     Param,
     Patch,
     Post,
+    Query,
     Req,
     UnauthorizedException,
     UseGuards,
@@ -177,9 +178,19 @@ export class CartController {
         );
     }
 
+    // cart.controller.ts
     @Get('abandoned')
     @UseGuards(AdminAuthGuard)
-    async getAbandonedCarts() {
-        return this.cartService.getAbandonedCarts();
+    async getAbandonedCarts(
+        @Query('page') pageQuery?: string,
+        @Query('limit') limitQuery?: string,
+    ) {
+        const page = Math.max(1, parseInt(pageQuery ?? '1', 10) || 1);
+        const limit = Math.min(
+            100,
+            Math.max(1, parseInt(limitQuery ?? '20', 10) || 20),
+        );
+
+        return this.cartService.getAbandonedCarts(page, limit);
     }
 }

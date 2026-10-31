@@ -27,17 +27,25 @@ export declare class CartController {
             id: string;
         };
     }>;
-    getAbandonedCarts(): Promise<{
-        cartId: any;
-        user: {
-            userId: any;
-            name: any;
-            number: any;
-            email: any;
+    getAbandonedCarts(pageQuery?: string, limitQuery?: string): Promise<{
+        data: {
+            cartId: any;
+            user: {
+                userId: any;
+                name: any;
+                number: any;
+                email: any;
+            };
+            items: any;
+            updatedAt: any;
+            createdAt: any;
+        }[];
+        pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            totalPages: number;
         };
-        items: any;
-        updatedAt: any;
-        createdAt: any;
-    }[]>;
+    }>;
 }
 export {};

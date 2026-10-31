@@ -10,6 +10,7 @@ async function bootstrap() {
     app.enableCors({
         origin: [
             'https://ecommerce-frontend-umber-alpha.vercel.app',
+            'https://store.urbanza.shop',
             'http://localhost:3000',
         ],
         methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
