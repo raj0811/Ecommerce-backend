@@ -64,7 +64,6 @@ let ShipRocketService = class ShipRocketService {
         catch (error) {
             console.log(error?.response, 'error11');
             if (axios_1.default.isAxiosError(error) && error.response?.status === 401) {
-                console.log(error.response);
                 this.token = null;
                 this.tokenExpiresAt = 0;
             }
@@ -72,7 +71,6 @@ let ShipRocketService = class ShipRocketService {
         }
     }
     async createShipmentOrder(payload) {
-        console.log(payload);
         return this.post('/orders/create/adhoc', payload);
     }
     async handleWebhook(payload) {

@@ -27,11 +27,6 @@ export class S3BucketService {
         };
         try {
 
-            console.log({
-                a: process.env.AWS_ACCESS_KEY_ID,
-                b: process.env.AWS_SECRET_ACCESS_KEY
-            });
-
 
             await this.s3Bucket.upload(params).promise();
 

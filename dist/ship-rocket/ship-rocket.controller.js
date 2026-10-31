@@ -19,12 +19,15 @@ const admin_AuthGuard_1 = require("../Guards/admin.AuthGuard");
 const database_service_1 = require("../database/database.service");
 const crypto_1 = require("crypto");
 const order_schema_1 = require("../database/schema/order.schema");
+const whatsapp_service_1 = require("../whatsapp/whatsapp.service");
 let ShipRocketController = class ShipRocketController {
     shipRocketService;
     databaseService;
-    constructor(shipRocketService, databaseService) {
+    whatsappService;
+    constructor(shipRocketService, databaseService, whatsappService) {
         this.shipRocketService = shipRocketService;
         this.databaseService = databaseService;
+        this.whatsappService = whatsappService;
     }
     async webhook(body, req) {
         try {
@@ -98,6 +101,12 @@ let ShipRocketController = class ShipRocketController {
             let orderStatus;
             if (normalizedStatus === 'DELIVERED' ||
                 normalizedCurrentStatus === 'DELIVERED') {
+                order.deliveredAt = new Date();
+                await this.whatsappService.sendOrderDelivered({
+                    phone: process.env.WHATSAPP_NUMBER,
+                    customerName: order.customer.firstName,
+                    orderNumber: order.orderNumber,
+                });
                 orderStatus = order_schema_1.OrderStatus.DELIVERED;
             }
             else if (normalizedStatus === 'CANCELLED' ||
@@ -105,6 +114,12 @@ let ShipRocketController = class ShipRocketController {
                 normalizedCurrentStatus === 'CANCELLED' ||
                 normalizedCurrentStatus === 'CANCELED') {
                 orderStatus = order_schema_1.OrderStatus.CANCELLED;
+                order.cancelledAt = new Date();
+                await this.whatsappService.sendOrderCancelled({
+                    phone: order.customer.phone,
+                    customerName: order.customer.firstName,
+                    orderNumber: order.orderNumber,
+                });
             }
             else if (normalizedStatus === 'IN TRANSIT' ||
                 normalizedStatus === 'IN_TRANSIT' ||
@@ -114,6 +129,12 @@ let ShipRocketController = class ShipRocketController {
             }
             else if (normalizedStatus === 'SHIPPED' ||
                 normalizedStatus === 'PICKED UP') {
+                await this.whatsappService.sendOrderShipped({
+                    phone: process.env.WHATSAPP_NUMBER,
+                    customerName: order.customer.firstName,
+                    orderNumber: order.orderNumber,
+                    trackingUrl: `${process.env.URL}/track-order?order_id=${order.orderNumber}`,
+                });
                 orderStatus = order_schema_1.OrderStatus.SHIPPED;
             }
             const parseShiprocketDate = (value) => {
@@ -270,6 +291,7 @@ __decorate([
 exports.ShipRocketController = ShipRocketController = __decorate([
     (0, common_1.Controller)('ship-rocket'),
     __metadata("design:paramtypes", [ship_rocket_service_1.ShipRocketService,
-        database_service_1.DatabaseService])
+        database_service_1.DatabaseService,
+        whatsapp_service_1.WhatsappService])
 ], ShipRocketController);
 //# sourceMappingURL=ship-rocket.controller.js.map

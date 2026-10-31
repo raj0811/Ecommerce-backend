@@ -22,4 +22,16 @@ export declare class CartService {
             id: string;
         };
     }>;
+    getAbandonedCarts(): Promise<{
+        cartId: any;
+        user: {
+            userId: any;
+            name: any;
+            number: any;
+            email: any;
+        };
+        items: any;
+        updatedAt: any;
+        createdAt: any;
+    }[]>;
 }

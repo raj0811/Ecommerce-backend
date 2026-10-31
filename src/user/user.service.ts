@@ -338,7 +338,6 @@ export class UserService {
                 process.env.JWT_SECRET!,
             );
         } catch (e) {
-            console.log(e);
 
             throw new UnauthorizedException(
                 'OTP challenge expired or invalid',

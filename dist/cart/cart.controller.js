@@ -49,6 +49,7 @@ exports.CartController = void 0;
 const common_1 = require("@nestjs/common");
 const jwt = __importStar(require("jsonwebtoken"));
 const cart_service_1 = require("./cart.service");
+const admin_AuthGuard_1 = require("../Guards/admin.AuthGuard");
 let CartController = class CartController {
     cartService;
     constructor(cartService) {
@@ -64,7 +65,6 @@ let CartController = class CartController {
             try {
                 const payload = await jwt.verify(token, process.env.JWT_SECRET);
                 const userId = payload.id ?? payload._id ?? payload.sub;
-                console.log(userId);
                 if (!userId) {
                     throw new common_1.UnauthorizedException('User ID missing from access token');
                 }
@@ -89,7 +89,6 @@ let CartController = class CartController {
         return this.cartService.getCart(identity.userId, identity.guestId);
     }
     async addItem(body, request, guestId) {
-        console.log('item');
         if (!body.productId?.trim()) {
             throw new common_1.BadRequestException('productId is required');
         }
@@ -114,6 +113,9 @@ let CartController = class CartController {
     async clearCart(request, guestId) {
         const identity = await this.getIdentity(request, guestId);
         return this.cartService.clearCart(identity.userId, identity.guestId);
+    }
+    async getAbandonedCarts() {
+        return this.cartService.getAbandonedCarts();
     }
 };
 exports.CartController = CartController;
@@ -161,6 +163,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], CartController.prototype, "clearCart", null);
+__decorate([
+    (0, common_1.Get)('abandoned'),
+    (0, common_1.UseGuards)(admin_AuthGuard_1.AdminAuthGuard),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], CartController.prototype, "getAbandonedCarts", null);
 exports.CartController = CartController = __decorate([
     (0, common_1.Controller)('cart'),
     __metadata("design:paramtypes", [cart_service_1.CartService])

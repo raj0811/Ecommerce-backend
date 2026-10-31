@@ -11,10 +11,12 @@ import {
     Post,
     Req,
     UnauthorizedException,
+    UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import * as jwt from 'jsonwebtoken'
 import { CartService } from './cart.service';
+import { AdminAuthGuard } from 'src/Guards/admin.AuthGuard';
 
 type JwtPayload = {
     id?: string;
@@ -51,7 +53,6 @@ export class CartController {
                 );
 
                 const userId = payload.id ?? payload._id ?? payload.sub;
-                console.log(userId);
 
                 if (!userId) {
                     throw new UnauthorizedException(
@@ -102,7 +103,6 @@ export class CartController {
         @Req() request: AuthenticatedRequest,
         @Headers('x-guest-id') guestId?: string,
     ) {
-        console.log('item');
 
         if (!body.productId?.trim()) {
             throw new BadRequestException('productId is required');
@@ -175,5 +175,11 @@ export class CartController {
             identity.userId,
             identity.guestId,
         );
+    }
+
+    @Get('abandoned')
+    @UseGuards(AdminAuthGuard)
+    async getAbandonedCarts() {
+        return this.cartService.getAbandonedCarts();
     }
 }

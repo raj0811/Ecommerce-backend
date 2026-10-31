@@ -304,7 +304,6 @@ let UserService = class UserService {
             payload = jwt.verify(challengeToken, process.env.JWT_SECRET);
         }
         catch (e) {
-            console.log(e);
             throw new common_1.UnauthorizedException('OTP challenge expired or invalid');
         }
         if (payload.purpose !== 'login_2fa') {

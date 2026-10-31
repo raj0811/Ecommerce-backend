@@ -203,7 +203,6 @@ let PaymentService = class PaymentService {
             });
         }
         catch (error) {
-            console.log(error);
             if (error instanceof common_1.BadRequestException ||
                 error instanceof common_1.InternalServerErrorException) {
                 throw error;

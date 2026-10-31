@@ -159,6 +159,39 @@ let CartService = class CartService {
             cart,
         };
     }
+    async getAbandonedCarts() {
+        const carts = await this.databaseService.cartModel
+            .find({
+            userId: {
+                $exists: true,
+                $ne: null,
+            },
+            items: {
+                $exists: true,
+                $ne: [],
+            },
+        })
+            .populate({
+            path: 'userId',
+            select: 'name number email',
+        })
+            .sort({ updatedAt: -1 })
+            .lean();
+        return carts
+            .filter((cart) => cart.userId)
+            .map((cart) => ({
+            cartId: cart._id,
+            user: {
+                userId: cart.userId._id,
+                name: cart.userId.name,
+                number: cart.userId.number,
+                email: cart.userId.email,
+            },
+            items: cart.items,
+            updatedAt: cart.updatedAt,
+            createdAt: cart.createdAt,
+        }));
+    }
 };
 exports.CartService = CartService;
 exports.CartService = CartService = __decorate([

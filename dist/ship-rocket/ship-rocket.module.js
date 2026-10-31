@@ -12,13 +12,14 @@ const ship_rocket_service_1 = require("./ship-rocket.service");
 const ship_rocket_controller_1 = require("./ship-rocket.controller");
 const database_module_1 = require("../database/database.module");
 const admin_module_1 = require("../admin/admin.module");
+const whatsapp_service_1 = require("../whatsapp/whatsapp.service");
 let ShipRocketModule = class ShipRocketModule {
 };
 exports.ShipRocketModule = ShipRocketModule;
 exports.ShipRocketModule = ShipRocketModule = __decorate([
     (0, common_1.Module)({
         imports: [database_module_1.DatabaseModule, admin_module_1.AdminModule],
-        providers: [ship_rocket_service_1.ShipRocketService],
+        providers: [ship_rocket_service_1.ShipRocketService, whatsapp_service_1.WhatsappService],
         controllers: [ship_rocket_controller_1.ShipRocketController],
         exports: [ship_rocket_service_1.ShipRocketService],
     })

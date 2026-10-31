@@ -87,7 +87,6 @@ export class ShipRocketService {
 
 
             if (axios.isAxiosError(error) && error.response?.status === 401) {
-                console.log(error.response);
 
                 this.token = null;
                 this.tokenExpiresAt = 0;
@@ -106,7 +105,6 @@ export class ShipRocketService {
     async createShipmentOrder(
         payload: Record<string, unknown>,
     ) {
-        console.log(payload);
 
         return this.post(
             '/orders/create/adhoc',

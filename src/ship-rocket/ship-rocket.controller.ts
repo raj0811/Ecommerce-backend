@@ -4,6 +4,7 @@ import { AdminAuthGuard } from 'src/Guards/admin.AuthGuard';
 import { DatabaseService } from 'src/database/database.service';
 import { timingSafeEqual } from 'crypto';
 import { OrderStatus } from 'src/database/schema/order.schema';
+import { WhatsappService } from 'src/whatsapp/whatsapp.service';
 
 export interface ShiprocketWebhookPayload {
     awb: string | number;
@@ -29,6 +30,7 @@ export class ShipRocketController {
     constructor(
         private shipRocketService: ShipRocketService,
         private readonly databaseService: DatabaseService,
+        private readonly whatsappService: WhatsappService
     ) { }
 
     @Post('webhook')
@@ -166,6 +168,12 @@ export class ShipRocketController {
                 normalizedStatus === 'DELIVERED' ||
                 normalizedCurrentStatus === 'DELIVERED'
             ) {
+                order.deliveredAt = new Date();
+                await this.whatsappService.sendOrderDelivered({
+                    phone: process.env.WHATSAPP_NUMBER!,
+                    customerName: order.customer.firstName,
+                    orderNumber: order.orderNumber,
+                });
                 orderStatus = OrderStatus.DELIVERED;
             } else if (
                 normalizedStatus === 'CANCELLED' ||
@@ -173,7 +181,14 @@ export class ShipRocketController {
                 normalizedCurrentStatus === 'CANCELLED' ||
                 normalizedCurrentStatus === 'CANCELED'
             ) {
+
                 orderStatus = OrderStatus.CANCELLED;
+                order.cancelledAt = new Date();
+                await this.whatsappService.sendOrderCancelled({
+                    phone: order.customer.phone,
+                    customerName: order.customer.firstName,
+                    orderNumber: order.orderNumber,
+                });
             } else if (
                 normalizedStatus === 'IN TRANSIT' ||
                 normalizedStatus === 'IN_TRANSIT' ||
@@ -185,6 +200,12 @@ export class ShipRocketController {
                 normalizedStatus === 'SHIPPED' ||
                 normalizedStatus === 'PICKED UP'
             ) {
+                await this.whatsappService.sendOrderShipped({
+                    phone: process.env.WHATSAPP_NUMBER!,
+                    customerName: order.customer.firstName,
+                    orderNumber: order.orderNumber,
+                    trackingUrl: `${process.env.URL}/track-order?order_id=${order.orderNumber}`,
+                });
                 orderStatus = OrderStatus.SHIPPED;
             }
 

@@ -1,5 +1,6 @@
 import { ShipRocketService } from './ship-rocket.service';
 import { DatabaseService } from "../database/database.service";
+import { WhatsappService } from "../whatsapp/whatsapp.service";
 export interface ShiprocketWebhookPayload {
     awb: string | number;
     current_status?: string;
@@ -21,7 +22,8 @@ export interface ShiprocketWebhookPayload {
 export declare class ShipRocketController {
     private shipRocketService;
     private readonly databaseService;
-    constructor(shipRocketService: ShipRocketService, databaseService: DatabaseService);
+    private readonly whatsappService;
+    constructor(shipRocketService: ShipRocketService, databaseService: DatabaseService, whatsappService: WhatsappService);
     webhook(body: any, req: any): Promise<{
         success: boolean;
         message: string;

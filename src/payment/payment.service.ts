@@ -360,7 +360,6 @@ export class PaymentService {
                 transaction_id = transaction._id;
             });
         } catch (error) {
-            console.log(error);
 
             // withTransaction aborts all order, transaction and stock writes.
             // Never manually increment stock here; MongoDB rolled it back.

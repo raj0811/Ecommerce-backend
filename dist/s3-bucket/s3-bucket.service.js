@@ -64,10 +64,6 @@ let S3BucketService = class S3BucketService {
             ContentType: contentType,
         };
         try {
-            console.log({
-                a: process.env.AWS_ACCESS_KEY_ID,
-                b: process.env.AWS_SECRET_ACCESS_KEY
-            });
             await this.s3Bucket.upload(params).promise();
             return `https://${bucketName}.s3.amazonaws.com/${key}`;
         }
