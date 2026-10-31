@@ -52,6 +52,7 @@ export declare class OrderService {
             razorpayRefundId: string | null;
             refundInitiatedAt: Date | null;
             refundGatewayStatus: string | null;
+            scans: import("src/database/schema/order.schema").ShiprocketScan[];
             _id: Types.ObjectId;
             __v: number;
         }[];
@@ -115,6 +116,7 @@ export declare class OrderService {
         razorpayRefundId: string | null;
         refundInitiatedAt: Date | null;
         refundGatewayStatus: string | null;
+        scans: import("src/database/schema/order.schema").ShiprocketScan[];
         _id: Types.ObjectId;
         __v: number;
     }>;
@@ -160,6 +162,7 @@ export declare class OrderService {
             razorpayRefundId: string | null;
             refundInitiatedAt: Date | null;
             refundGatewayStatus: string | null;
+            scans: import("src/database/schema/order.schema").ShiprocketScan[];
             _id: Types.ObjectId;
             __v: number;
         }[];

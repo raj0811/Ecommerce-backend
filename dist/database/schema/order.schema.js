@@ -42,7 +42,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OrderSchema = exports.Order = exports.ShipmentScanSchema = exports.ShipmentScan = exports.OrderCustomerSchema = exports.OrderCustomer = exports.OrderAddressSchema = exports.OrderAddress = exports.OrderItemSchema = exports.OrderItem = exports.PaymentStatus = exports.PaymentMethod = exports.OrderStatus = void 0;
+exports.OrderSchema = exports.Order = exports.ShipmentScanSchema = exports.ShipmentScan = exports.OrderCustomerSchema = exports.OrderCustomer = exports.OrderAddressSchema = exports.OrderAddress = exports.OrderItemSchema = exports.ShiprocketScanSchema = exports.ShiprocketScan = exports.OrderItem = exports.PaymentStatus = exports.PaymentMethod = exports.OrderStatus = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = __importStar(require("mongoose"));
 var OrderStatus;
@@ -59,6 +59,7 @@ var OrderStatus;
     OrderStatus["RETURNED"] = "RETURNED";
     OrderStatus["COD_INITIATED"] = "COD_INITIATED";
     OrderStatus["REFUND_INITIATED"] = "REFUND_INITIATED";
+    OrderStatus["IN_TRANSIT"] = "IN TRANSIT";
 })(OrderStatus || (exports.OrderStatus = OrderStatus = {}));
 var PaymentMethod;
 (function (PaymentMethod) {
@@ -118,6 +119,43 @@ __decorate([
 exports.OrderItem = OrderItem = __decorate([
     (0, mongoose_1.Schema)({ _id: false })
 ], OrderItem);
+let ShiprocketScan = class ShiprocketScan {
+    date;
+    status;
+    activity;
+    location;
+    'sr-status';
+    'sr-status-label';
+};
+exports.ShiprocketScan = ShiprocketScan;
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: '' }),
+    __metadata("design:type", String)
+], ShiprocketScan.prototype, "date", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: '' }),
+    __metadata("design:type", String)
+], ShiprocketScan.prototype, "status", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: '' }),
+    __metadata("design:type", String)
+], ShiprocketScan.prototype, "activity", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: '' }),
+    __metadata("design:type", String)
+], ShiprocketScan.prototype, "location", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: '' }),
+    __metadata("design:type", String)
+], ShiprocketScan.prototype, "sr-status", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: String, default: '' }),
+    __metadata("design:type", String)
+], ShiprocketScan.prototype, "sr-status-label", void 0);
+exports.ShiprocketScan = ShiprocketScan = __decorate([
+    (0, mongoose_1.Schema)({ _id: false })
+], ShiprocketScan);
+exports.ShiprocketScanSchema = mongoose_1.SchemaFactory.createForClass(ShiprocketScan);
 exports.OrderItemSchema = mongoose_1.SchemaFactory.createForClass(OrderItem);
 let OrderAddress = class OrderAddress {
     address;
@@ -246,6 +284,7 @@ let Order = class Order {
     razorpayRefundId;
     refundInitiatedAt;
     refundGatewayStatus;
+    scans;
 };
 exports.Order = Order;
 __decorate([
@@ -420,6 +459,13 @@ __decorate([
     (0, mongoose_1.Prop)({ type: String, default: null }),
     __metadata("design:type", Object)
 ], Order.prototype, "refundGatewayStatus", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        type: [exports.ShiprocketScanSchema],
+        default: [],
+    }),
+    __metadata("design:type", Array)
+], Order.prototype, "scans", void 0);
 exports.Order = Order = __decorate([
     (0, mongoose_1.Schema)({
         timestamps: true,

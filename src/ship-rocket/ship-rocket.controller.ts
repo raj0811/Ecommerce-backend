@@ -1,7 +1,9 @@
-import { BadRequestException, Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, InternalServerErrorException, Post, Query, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { ShipRocketService } from './ship-rocket.service';
 import { AdminAuthGuard } from 'src/Guards/admin.AuthGuard';
 import { DatabaseService } from 'src/database/database.service';
+import { timingSafeEqual } from 'crypto';
+import { OrderStatus } from 'src/database/schema/order.schema';
 
 export interface ShiprocketWebhookPayload {
     awb: string | number;
@@ -29,23 +31,280 @@ export class ShipRocketController {
         private readonly databaseService: DatabaseService,
     ) { }
 
-    @Post('/webhook')
-    async testWebhook(@Body() body: any, @Req() req: any) {
-
+    @Post('webhook')
+    @HttpCode(HttpStatus.OK)
+    async webhook(
+        @Body() body: any,
+        @Req() req: any,
+    ) {
         try {
 
-            const headers = req.headers;
+            const secret = process.env.SHIPROCKET_WEBHOOK_SECRET;
+
+            if (!secret) {
+                throw new InternalServerErrorException(
+                    'Webhook security is not configured',
+                );
+            }
+
+
+            const authorization = req.headers['authorization'];
+
+            if (!authorization || typeof authorization !== 'string') {
+                throw new UnauthorizedException(
+                    'Authorization header missing',
+                );
+            }
+
+
+            const expected = Buffer.from(secret, 'utf8');
+            const received = Buffer.from(authorization, 'utf8');
+
+            const isValid =
+                expected.length === received.length &&
+                timingSafeEqual(expected, received);
+
+            if (!isValid) {
+
+                throw new UnauthorizedException(
+                    'Invalid webhook authorization',
+                );
+            }
+
+
             await this.databaseService.webhookLogModel.create({
                 log: JSON.stringify(body),
-                headers: JSON.stringify(headers),
-                event: "Ship Rocket"
+                headers: JSON.stringify({
+                    'user-agent': req.headers['user-agent'],
+                    'content-type': req.headers['content-type'],
+                    'x-forwarded-for': req.headers['x-forwarded-for'],
+                }),
+                event: 'Shiprocket',
             });
-        } catch (e) {
-            console.log('fail to save logs');
 
+            const {
+                order_id,
+                sr_order_id,
+                shipment_status,
+                shipment_status_id,
+                current_status,
+                current_timestamp,
+                scans,
+                pickup_scheduled_date,
+                awb,
+                courier_name,
+                etd,
+            } = body;
+
+            if (!order_id && !sr_order_id) {
+
+                return {
+                    success: false,
+                    message: 'Order identifier missing',
+                };
+            }
+
+
+            const normalizedCurrentStatus = String(current_status || '')
+                .trim()
+                .toUpperCase();
+
+            const normalizedShipmentStatus = String(shipment_status || '')
+                .trim()
+                .toUpperCase();
+
+            const normalizedStatus =
+                normalizedShipmentStatus || normalizedCurrentStatus;
+
+
+            const conditions: any[] = [];
+
+            if (order_id) {
+                conditions.push({ orderNumber: String(order_id) });
+            }
+
+            if (sr_order_id) {
+                conditions.push({
+                    shiprocketOrderId: String(sr_order_id),
+                });
+            }
+
+            const order = await this.databaseService.orderModel.findOne({
+                $or: conditions,
+            });
+
+            if (!order) {
+
+
+                return {
+                    success: false,
+                    message: 'Order not found',
+                };
+            }
+
+
+            if (
+                normalizedStatus === 'CANCELLED' ||
+                normalizedCurrentStatus === 'CANCELED' ||
+                normalizedCurrentStatus === 'CANCELLED'
+            ) {
+                if (order.status === OrderStatus.CANCELLED) {
+
+
+                    return {
+                        success: true,
+                        message: 'Cancellation already processed',
+                        ignored: true,
+                    };
+                }
+            }
+
+
+            let orderStatus: OrderStatus | undefined;
+
+            if (
+                normalizedStatus === 'DELIVERED' ||
+                normalizedCurrentStatus === 'DELIVERED'
+            ) {
+                orderStatus = OrderStatus.DELIVERED;
+            } else if (
+                normalizedStatus === 'CANCELLED' ||
+                normalizedStatus === 'CANCELED' ||
+                normalizedCurrentStatus === 'CANCELLED' ||
+                normalizedCurrentStatus === 'CANCELED'
+            ) {
+                orderStatus = OrderStatus.CANCELLED;
+            } else if (
+                normalizedStatus === 'IN TRANSIT' ||
+                normalizedStatus === 'IN_TRANSIT' ||
+                normalizedCurrentStatus === 'IN TRANSIT' ||
+                normalizedCurrentStatus === 'IN_TRANSIT'
+            ) {
+                orderStatus = OrderStatus.IN_TRANSIT;
+            } else if (
+                normalizedStatus === 'SHIPPED' ||
+                normalizedStatus === 'PICKED UP'
+            ) {
+                orderStatus = OrderStatus.SHIPPED;
+            }
+
+
+            const parseShiprocketDate = (value: any): Date | null => {
+                if (!value || typeof value !== 'string') return null;
+
+                const trimmed = value.trim();
+
+                if (!trimmed) return null;
+
+
+                const match = trimmed.match(
+                    /^(\d{2}) (\d{2}) (\d{4}) (\d{2}):(\d{2}):(\d{2})$/,
+                );
+
+                if (match) {
+                    const [, day, month, year, hour, minute, second] = match;
+
+                    const date = new Date(
+                        Number(year),
+                        Number(month) - 1,
+                        Number(day),
+                        Number(hour),
+                        Number(minute),
+                        Number(second),
+                    );
+
+                    return Number.isNaN(date.getTime()) ? null : date;
+                }
+
+                const date = new Date(trimmed);
+
+                return Number.isNaN(date.getTime()) ? null : date;
+            };
+
+
+            const update: any = {
+                shipmentCurrentStatus: current_status || null,
+                shipmentStatus: shipment_status || null,
+                shipmentStatusId:
+                    shipment_status_id != null
+                        ? Number(shipment_status_id)
+                        : null,
+                shipmentCurrentTimestamp:
+                    parseShiprocketDate(current_timestamp),
+            };
+
+            if (sr_order_id != null) {
+                update.shiprocketOrderId = String(sr_order_id);
+            }
+
+            if (awb) {
+                update.awb = String(awb);
+                update.trackingNumber = String(awb);
+            }
+
+            if (courier_name) {
+                update.courierName = courier_name;
+            }
+
+            if (etd && String(etd).trim()) {
+                update.shipmentEtd = parseShiprocketDate(etd);
+            }
+
+            if (Array.isArray(scans)) {
+
+                update.scans = scans.map((scan: any) => ({
+                    date: scan.date || '',
+                    status: scan.status || '',
+                    activity: scan.activity || '',
+                    location: scan.location || '',
+                    'sr-status': scan['sr-status'] != null
+                        ? String(scan['sr-status'])
+                        : '',
+                    'sr-status-label': scan['sr-status-label'] || '',
+                }));
+
+
+                update.shipmentScans = scans.map((scan: any) => ({
+                    date: scan.date || '',
+                    activity: scan.activity || '',
+                    location: scan.location || '',
+                }));
+            }
+
+            if (orderStatus) {
+
+                if (order.status !== OrderStatus.DELIVERED) {
+                    update.status = orderStatus;
+                }
+            }
+
+            if (orderStatus === OrderStatus.DELIVERED) {
+                update.deliveredAt = new Date();
+            }
+
+            if (orderStatus === OrderStatus.CANCELLED) {
+                update.cancelledAt = new Date();
+            }
+
+
+            await this.databaseService.orderModel.findByIdAndUpdate(
+                order._id,
+                { $set: update },
+                { new: true, runValidators: true },
+            );
+
+
+            return {
+                success: true,
+                message: 'Shiprocket webhook processed successfully',
+                orderNumber: order.orderNumber,
+                shipmentStatus: normalizedStatus,
+            };
+
+        } catch (error) {
+
+            throw error;
         }
-        return true
-
     }
 
     @Get("orders")

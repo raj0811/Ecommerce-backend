@@ -12,7 +12,8 @@ export declare enum OrderStatus {
     RETURN_INITIATED = "RETURN_INITIATED",
     RETURNED = "RETURNED",
     COD_INITIATED = "COD_INITIATED",
-    REFUND_INITIATED = "REFUND_INITIATED"
+    REFUND_INITIATED = "REFUND_INITIATED",
+    IN_TRANSIT = "IN TRANSIT"
 }
 export declare enum PaymentMethod {
     COD = "COD",
@@ -34,6 +35,82 @@ export declare class OrderItem {
     quantity: number;
     lineTotal: number;
 }
+export declare class ShiprocketScan {
+    date: string;
+    status: string;
+    activity: string;
+    location: string;
+    'sr-status': string;
+    'sr-status-label': string;
+}
+export declare const ShiprocketScanSchema: mongoose.Schema<ShiprocketScan, mongoose.Model<ShiprocketScan, any, any, any, any, any, ShiprocketScan & {
+    _id: Types.ObjectId;
+} & {
+    __v: number;
+}>, {}, {}, {}, {}, mongoose.DefaultSchemaOptions, ShiprocketScan, mongoose.Document<unknown, {}, ShiprocketScan, {
+    id: string;
+}, mongoose.DefaultSchemaOptions> & Omit<ShiprocketScan & {
+    _id: Types.ObjectId;
+} & {
+    __v: number;
+}, "id"> & mongoose.HydratedDocumentOverrides<{
+    id: string;
+}>, {
+    date?: mongoose.SchemaDefinitionProperty<string, ShiprocketScan, mongoose.Document<unknown, {}, ShiprocketScan, {
+        id: string;
+    }, mongoose.DefaultSchemaOptions> & Omit<ShiprocketScan & {
+        _id: Types.ObjectId;
+    } & {
+        __v: number;
+    }, "id"> & mongoose.HydratedDocumentOverrides<{
+        id: string;
+    }>> | undefined;
+    status?: mongoose.SchemaDefinitionProperty<string, ShiprocketScan, mongoose.Document<unknown, {}, ShiprocketScan, {
+        id: string;
+    }, mongoose.DefaultSchemaOptions> & Omit<ShiprocketScan & {
+        _id: Types.ObjectId;
+    } & {
+        __v: number;
+    }, "id"> & mongoose.HydratedDocumentOverrides<{
+        id: string;
+    }>> | undefined;
+    activity?: mongoose.SchemaDefinitionProperty<string, ShiprocketScan, mongoose.Document<unknown, {}, ShiprocketScan, {
+        id: string;
+    }, mongoose.DefaultSchemaOptions> & Omit<ShiprocketScan & {
+        _id: Types.ObjectId;
+    } & {
+        __v: number;
+    }, "id"> & mongoose.HydratedDocumentOverrides<{
+        id: string;
+    }>> | undefined;
+    location?: mongoose.SchemaDefinitionProperty<string, ShiprocketScan, mongoose.Document<unknown, {}, ShiprocketScan, {
+        id: string;
+    }, mongoose.DefaultSchemaOptions> & Omit<ShiprocketScan & {
+        _id: Types.ObjectId;
+    } & {
+        __v: number;
+    }, "id"> & mongoose.HydratedDocumentOverrides<{
+        id: string;
+    }>> | undefined;
+    'sr-status'?: mongoose.SchemaDefinitionProperty<string, ShiprocketScan, mongoose.Document<unknown, {}, ShiprocketScan, {
+        id: string;
+    }, mongoose.DefaultSchemaOptions> & Omit<ShiprocketScan & {
+        _id: Types.ObjectId;
+    } & {
+        __v: number;
+    }, "id"> & mongoose.HydratedDocumentOverrides<{
+        id: string;
+    }>> | undefined;
+    'sr-status-label'?: mongoose.SchemaDefinitionProperty<string, ShiprocketScan, mongoose.Document<unknown, {}, ShiprocketScan, {
+        id: string;
+    }, mongoose.DefaultSchemaOptions> & Omit<ShiprocketScan & {
+        _id: Types.ObjectId;
+    } & {
+        __v: number;
+    }, "id"> & mongoose.HydratedDocumentOverrides<{
+        id: string;
+    }>> | undefined;
+}, ShiprocketScan>;
 export declare const OrderItemSchema: mongoose.Schema<OrderItem, mongoose.Model<OrderItem, any, any, any, any, any, OrderItem & {
     _id: Types.ObjectId;
 } & {
@@ -325,6 +402,7 @@ export declare class Order {
     razorpayRefundId: string | null;
     refundInitiatedAt: Date | null;
     refundGatewayStatus: string | null;
+    scans: ShiprocketScan[];
 }
 export declare const OrderSchema: mongoose.Schema<Order, mongoose.Model<Order, any, any, any, any, any, Order & {
     _id: Types.ObjectId;
@@ -646,6 +724,15 @@ export declare const OrderSchema: mongoose.Schema<Order, mongoose.Model<Order, a
         id: string;
     }>> | undefined;
     refundGatewayStatus?: mongoose.SchemaDefinitionProperty<string | null, Order, mongoose.Document<unknown, {}, Order, {
+        id: string;
+    }, mongoose.DefaultSchemaOptions> & Omit<Order & {
+        _id: Types.ObjectId;
+    } & {
+        __v: number;
+    }, "id"> & mongoose.HydratedDocumentOverrides<{
+        id: string;
+    }>> | undefined;
+    scans?: mongoose.SchemaDefinitionProperty<ShiprocketScan[], Order, mongoose.Document<unknown, {}, Order, {
         id: string;
     }, mongoose.DefaultSchemaOptions> & Omit<Order & {
         _id: Types.ObjectId;

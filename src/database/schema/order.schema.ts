@@ -17,6 +17,7 @@ export enum OrderStatus {
     RETURNED = "RETURNED",
     COD_INITIATED = "COD_INITIATED",
     REFUND_INITIATED = "REFUND_INITIATED",
+    IN_TRANSIT = "IN TRANSIT"
 }
 
 export enum PaymentMethod {
@@ -59,6 +60,30 @@ export class OrderItem {
     @Prop({ type: Number, required: true, min: 0 })
     lineTotal: number;
 }
+
+@Schema({ _id: false })
+export class ShiprocketScan {
+    @Prop({ type: String, default: '' })
+    date: string;
+
+    @Prop({ type: String, default: '' })
+    status: string;
+
+    @Prop({ type: String, default: '' })
+    activity: string;
+
+    @Prop({ type: String, default: '' })
+    location: string;
+
+    @Prop({ type: String, default: '' })
+    'sr-status': string;
+
+    @Prop({ type: String, default: '' })
+    'sr-status-label': string;
+}
+
+export const ShiprocketScanSchema =
+    SchemaFactory.createForClass(ShiprocketScan);
 
 export const OrderItemSchema = SchemaFactory.createForClass(OrderItem);
 
@@ -269,6 +294,12 @@ export class Order {
 
     @Prop({ type: String, default: null })
     refundGatewayStatus: string | null;
+
+    @Prop({
+        type: [ShiprocketScanSchema],
+        default: [],
+    })
+    scans: ShiprocketScan[];
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

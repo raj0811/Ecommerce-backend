@@ -22,7 +22,25 @@ export declare class ShipRocketController {
     private shipRocketService;
     private readonly databaseService;
     constructor(shipRocketService: ShipRocketService, databaseService: DatabaseService);
-    testWebhook(body: any, req: any): Promise<boolean>;
+    webhook(body: any, req: any): Promise<{
+        success: boolean;
+        message: string;
+        ignored?: undefined;
+        orderNumber?: undefined;
+        shipmentStatus?: undefined;
+    } | {
+        success: boolean;
+        message: string;
+        ignored: boolean;
+        orderNumber?: undefined;
+        shipmentStatus?: undefined;
+    } | {
+        success: boolean;
+        message: string;
+        orderNumber: string;
+        shipmentStatus: string;
+        ignored?: undefined;
+    }>;
     getOrders(page?: string, perPage?: string, sort?: "ASC" | "DESC", sortBy?: "id" | "status", from?: string, to?: string, filterBy?: string, filter?: string, search?: string): Promise<any>;
     trackOrder(order_id: string): Promise<any>;
 }

@@ -45,6 +45,7 @@ export declare class OrderController {
             razorpayRefundId: string | null;
             refundInitiatedAt: Date | null;
             refundGatewayStatus: string | null;
+            scans: import("src/database/schema/order.schema").ShiprocketScan[];
             _id: import("mongoose").Types.ObjectId;
             __v: number;
         }[];
@@ -124,6 +125,7 @@ export declare class OrderController {
         razorpayRefundId: string | null;
         refundInitiatedAt: Date | null;
         refundGatewayStatus: string | null;
+        scans: import("src/database/schema/order.schema").ShiprocketScan[];
         _id: import("mongoose").Types.ObjectId;
         __v: number;
     }>;
@@ -169,6 +171,7 @@ export declare class OrderController {
             razorpayRefundId: string | null;
             refundInitiatedAt: Date | null;
             refundGatewayStatus: string | null;
+            scans: import("src/database/schema/order.schema").ShiprocketScan[];
             _id: import("mongoose").Types.ObjectId;
             __v: number;
         }[];
