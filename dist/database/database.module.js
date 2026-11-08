@@ -21,6 +21,9 @@ const transaction_schema_1 = require("./schema/transaction.schema");
 const support_ticket_schema_1 = require("./schema/support-ticket.schema");
 const webhookLos_schema_1 = require("./schema/webhookLos.schema");
 const otp_schema_1 = require("./schema/otp.schema");
+const productRecommendations_1 = require("./schema/recommendations/productRecommendations");
+const productEvent_1 = require("./schema/recommendations/productEvent");
+const processed_recommendation_order_schema_1 = require("./schema/recommendations/processed-recommendation-order.schema");
 let DatabaseModule = class DatabaseModule {
 };
 exports.DatabaseModule = DatabaseModule;
@@ -38,7 +41,10 @@ exports.DatabaseModule = DatabaseModule = __decorate([
                 { name: transaction_schema_1.Transaction.name, schema: transaction_schema_1.TransactionSchema },
                 { name: support_ticket_schema_1.SupportTicket.name, schema: support_ticket_schema_1.SupportTicketSchema },
                 { name: webhookLos_schema_1.WebhookLog.name, schema: webhookLos_schema_1.WebhookLogSchema },
-                { name: otp_schema_1.Otp.name, schema: otp_schema_1.OtpSchema }
+                { name: otp_schema_1.Otp.name, schema: otp_schema_1.OtpSchema },
+                { name: productRecommendations_1.ProductRecommendation.name, schema: productRecommendations_1.ProductRecommendationSchema },
+                { name: productEvent_1.ProductEvent.name, schema: productEvent_1.ProductEventSchema },
+                { name: processed_recommendation_order_schema_1.ProcessedRecommendationOrder.name, schema: processed_recommendation_order_schema_1.ProcessedRecommendationOrderSchema }
             ])
         ],
         providers: [database_service_1.DatabaseService],

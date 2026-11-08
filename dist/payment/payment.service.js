@@ -22,15 +22,19 @@ const order_schema_1 = require("../database/schema/order.schema");
 const transaction_schema_1 = require("../database/schema/transaction.schema");
 const whatsapp_service_1 = require("../whatsapp/whatsapp.service");
 const user_service_1 = require("../user/user.service");
+const product_service_1 = require("../product/product.service");
+const productRecommendations_1 = require("../database/schema/recommendations/productRecommendations");
 let PaymentService = class PaymentService {
     databaseService;
     whatsappService;
     userService;
+    productService;
     reservationMinutes = 15;
-    constructor(databaseService, whatsappService, userService) {
+    constructor(databaseService, whatsappService, userService, productService) {
         this.databaseService = databaseService;
         this.whatsappService = whatsappService;
         this.userService = userService;
+        this.productService = productService;
     }
     generateOrderNumber() {
         return `ORD-${Date.now()}-${(0, crypto_1.randomUUID)()
@@ -283,6 +287,16 @@ let PaymentService = class PaymentService {
         catch (e) {
             console.log(`error in savin address ${e.message}`);
         }
+        try {
+            this.productService.updateRecommendations({
+                orderId: orderId.toString(),
+                productIds: input.items.map((item) => item.product_id.toString()),
+                recommendationType: productRecommendations_1.RecommendationType.FREQUENTLY_BOUGHT_TOGETHER,
+            });
+        }
+        catch (e) {
+            console.log("Error in Updating Recommendations");
+        }
         return {
             payment_url: `${process.env.BACKEND_URL}/payments/razorpay-init?transaction_id=${transaction_id}`,
             orderId,
@@ -518,6 +532,16 @@ let PaymentService = class PaymentService {
             .catch((error) => {
             console.error("Failed to send COD confirmation:", error.response?.data || error.message);
         });
+        try {
+            this.productService.updateRecommendations({
+                orderId: orderId.toString(),
+                productIds: input.items.map((item) => item.product_id.toString()),
+                recommendationType: productRecommendations_1.RecommendationType.FREQUENTLY_BOUGHT_TOGETHER,
+            });
+        }
+        catch (e) {
+            console.log("Error in Updating Recommendations");
+        }
         return {
             orderId,
             orderNumber,
@@ -718,6 +742,7 @@ exports.PaymentService = PaymentService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [database_service_1.DatabaseService,
         whatsapp_service_1.WhatsappService,
-        user_service_1.UserService])
+        user_service_1.UserService,
+        product_service_1.ProductService])
 ], PaymentService);
 //# sourceMappingURL=payment.service.js.map

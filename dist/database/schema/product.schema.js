@@ -23,6 +23,8 @@ let Product = class Product {
     stock;
     isActive;
     isFeatured;
+    bannerImages;
+    keyhighlights;
 };
 exports.Product = Product;
 __decorate([
@@ -117,6 +119,20 @@ __decorate([
     }),
     __metadata("design:type", Boolean)
 ], Product.prototype, "isFeatured", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        type: [String],
+        default: [],
+    }),
+    __metadata("design:type", Array)
+], Product.prototype, "bannerImages", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        type: [String],
+        default: [],
+    }),
+    __metadata("design:type", Array)
+], Product.prototype, "keyhighlights", void 0);
 exports.Product = Product = __decorate([
     (0, mongoose_1.Schema)({
         timestamps: true,

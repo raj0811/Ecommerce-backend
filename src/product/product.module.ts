@@ -9,6 +9,7 @@ import { S3BucketModule } from 'src/s3-bucket/s3-bucket.module';
 @Module({
   imports: [DatabaseModule, AdminModule, S3BucketModule],
   providers: [ProductService, AdminAuthGuard],
-  controllers: [ProductController]
+  controllers: [ProductController],
+  exports: [ProductService]
 })
 export class ProductModule { }

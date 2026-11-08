@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 import { PaymentMethod, PaymentStatus } from "../database/schema/order.schema";
 import { WhatsappService } from "../whatsapp/whatsapp.service";
 import { UserService } from "../user/user.service";
+import { ProductService } from "../product/product.service";
 type CheckoutItem = {
     product_id: string;
     qty: number;
@@ -39,8 +40,9 @@ export declare class PaymentService {
     private readonly databaseService;
     private readonly whatsappService;
     private readonly userService;
+    private readonly productService;
     private readonly reservationMinutes;
-    constructor(databaseService: DatabaseService, whatsappService: WhatsappService, userService: UserService);
+    constructor(databaseService: DatabaseService, whatsappService: WhatsappService, userService: UserService, productService: ProductService);
     generateOrderNumber(): string;
     private createRazorpayOrder;
     processOrder(input: CheckoutInput): Promise<{

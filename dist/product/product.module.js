@@ -21,7 +21,8 @@ exports.ProductModule = ProductModule = __decorate([
     (0, common_1.Module)({
         imports: [database_module_1.DatabaseModule, admin_module_1.AdminModule, s3_bucket_module_1.S3BucketModule],
         providers: [product_service_1.ProductService, admin_AuthGuard_1.AdminAuthGuard],
-        controllers: [product_controller_1.ProductController]
+        controllers: [product_controller_1.ProductController],
+        exports: [product_service_1.ProductService]
     })
 ], ProductModule);
 //# sourceMappingURL=product.module.js.map

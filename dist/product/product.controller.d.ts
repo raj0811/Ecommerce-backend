@@ -15,6 +15,13 @@ export declare class ProductController {
             url: string;
         };
     }>;
+    etHeroProduct(): Promise<{
+        products: [(import("../database/schema/product.schema").Product & {
+            _id: import("mongoose").Types.ObjectId;
+        } & {
+            __v: number;
+        })[]];
+    }>;
     addProduct(body: {
         name: string;
         price: number;
@@ -85,5 +92,26 @@ export declare class ProductController {
         _id: import("mongoose").Types.ObjectId;
     } & {
         __v: number;
+    }>;
+    getFrequentlyBoughtTogether(productId: string): Promise<{
+        productId: string;
+        type: string;
+        products: never[];
+        sourceCount: number;
+        algorithmVersion?: undefined;
+        generatedAt?: undefined;
+    } | {
+        productId: string;
+        type: import("../database/schema/recommendations/productRecommendations").RecommendationType;
+        algorithmVersion: number;
+        sourceCount: number;
+        generatedAt: Date;
+        products: {
+            product: import("mongoose").Types.ObjectId;
+            score: number;
+            purchaseCount: number;
+            confidence: number;
+            lift: number;
+        }[];
     }>;
 }

@@ -13,8 +13,16 @@ exports.ProductService = void 0;
 const common_1 = require("@nestjs/common");
 const database_service_1 = require("../database/database.service");
 const mongoose_1 = require("mongoose");
+const productRecommendations_1 = require("../database/schema/recommendations/productRecommendations");
 let ProductService = class ProductService {
     databaseService;
+    MAX_RECOMMENDATIONS = 20;
+    COMPLETED_ORDER_STATUSES = [
+        'CONFIRMED',
+        'PROCESSING',
+        'SHIPPED',
+        'DELIVERED',
+    ];
     constructor(databaseService) {
         this.databaseService = databaseService;
     }
@@ -307,6 +315,187 @@ let ProductService = class ProductService {
                 featuredProducts: 0,
                 lowStock: 0,
             },
+        };
+    }
+    async getHeroProducts() {
+        const products = await Promise.all([
+            this.databaseService.productModel
+                .find({
+                isFeatured: true
+            })
+                .select('-__v')
+                .sort({ createdAt: -1 })
+                .lean()
+                .exec()
+        ]);
+        return {
+            products,
+        };
+    }
+    async updateRecommendations(params) {
+        const { orderId, productIds, recommendationType, } = params;
+        const type = recommendationType ??
+            productRecommendations_1.RecommendationType.FREQUENTLY_BOUGHT_TOGETHER;
+        if (!mongoose_1.Types.ObjectId.isValid(orderId)) {
+            throw new common_1.BadRequestException('Invalid order ID');
+        }
+        const uniqueProductIds = [
+            ...new Set(productIds),
+        ];
+        if (uniqueProductIds.length < 2) {
+            return {
+                success: true,
+                message: 'At least two unique products are required',
+                processed: false,
+            };
+        }
+        if (uniqueProductIds.some((id) => !mongoose_1.Types.ObjectId.isValid(id))) {
+            throw new common_1.BadRequestException('Invalid product ID');
+        }
+        const objectIds = uniqueProductIds.map((id) => new mongoose_1.Types.ObjectId(id));
+        const session = await this.databaseService.connection.startSession();
+        try {
+            let result;
+            await session.withTransaction(async () => {
+                await this.databaseService.processedOrderModel.create([
+                    {
+                        orderId: new mongoose_1.Types.ObjectId(orderId),
+                        recommendationType,
+                    },
+                ], { session });
+                for (const sourceProductId of objectIds) {
+                    const recommendedProducts = objectIds.filter((id) => !id.equals(sourceProductId));
+                    await this.databaseService.recommendedProductModel.updateOne({
+                        productId: sourceProductId,
+                        type: recommendationType,
+                    }, {
+                        $inc: {
+                            sourceCount: 1,
+                        },
+                        $set: {
+                            generatedAt: new Date(),
+                        },
+                        $setOnInsert: {
+                            algorithmVersion: 1,
+                        },
+                    }, {
+                        upsert: true,
+                        session,
+                    });
+                    for (const recommendedProductId of recommendedProducts) {
+                        const existing = await this.databaseService.recommendedProductModel.findOne({
+                            productId: sourceProductId,
+                            type: recommendationType,
+                            'recommendations.productId': recommendedProductId,
+                        }, {
+                            _id: 1,
+                        }, { session });
+                        if (existing) {
+                            await this.databaseService.recommendedProductModel.updateOne({
+                                productId: sourceProductId,
+                                type: recommendationType,
+                                'recommendations.productId': recommendedProductId,
+                            }, {
+                                $inc: {
+                                    'recommendations.$.purchaseCount': 1,
+                                    'recommendations.$.score': 1,
+                                },
+                            }, { session });
+                        }
+                        else {
+                            await this.databaseService.recommendedProductModel.updateOne({
+                                productId: sourceProductId,
+                                type: recommendationType,
+                                'recommendations.productId': {
+                                    $ne: recommendedProductId,
+                                },
+                            }, {
+                                $push: {
+                                    recommendations: {
+                                        productId: recommendedProductId,
+                                        purchaseCount: 1,
+                                        score: 1,
+                                        confidence: 0,
+                                        lift: 0,
+                                    },
+                                },
+                            }, { session });
+                        }
+                    }
+                }
+                result = {
+                    success: true,
+                    message: 'Recommendations updated successfully',
+                    orderId,
+                    processedProducts: objectIds.length,
+                    recommendationType,
+                };
+            });
+            return result;
+        }
+        catch (error) {
+            if (error?.code === 11000) {
+                return {
+                    success: true,
+                    processed: false,
+                    message: 'Order already processed',
+                    orderId,
+                };
+            }
+            throw error;
+        }
+        finally {
+            await session.endSession();
+        }
+    }
+    async getFrequentlyBoughtTogether(productId) {
+        if (!mongoose_1.Types.ObjectId.isValid(productId)) {
+            throw new common_1.BadRequestException('Invalid product ID');
+        }
+        const currentProductId = new mongoose_1.Types.ObjectId(productId);
+        const recommendation = await this.databaseService.recommendedProductModel
+            .findOne({
+            productId: currentProductId,
+            type: productRecommendations_1.RecommendationType.FREQUENTLY_BOUGHT_TOGETHER,
+        })
+            .populate({
+            path: 'recommendations.productId',
+            model: 'Product',
+            select: 'name title slug price salePrice sellingPrice images image stock isActive',
+        })
+            .lean()
+            .exec();
+        if (!recommendation) {
+            return {
+                productId,
+                type: 'FREQUENTLY_BOUGHT_TOGETHER',
+                products: [],
+                sourceCount: 0,
+            };
+        }
+        const products = (recommendation.recommendations || [])
+            .filter((item) => {
+            const product = item.productId;
+            return (product &&
+                product._id &&
+                product.isActive !== false &&
+                (product.stock == null || product.stock > 0));
+        })
+            .sort((a, b) => b.score - a.score)
+            .map((item) => ({
+            product: item.productId,
+            score: item.score,
+            purchaseCount: item.purchaseCount,
+            confidence: item.confidence,
+            lift: item.lift,
+        }));
+        return {
+            productId,
+            type: recommendation.type,
+            algorithmVersion: recommendation.algorithmVersion,
+            sourceCount: recommendation.sourceCount,
+            generatedAt: recommendation.generatedAt,
+            products,
         };
     }
 };

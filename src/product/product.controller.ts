@@ -155,6 +155,11 @@ export class ProductController {
         }
     }
 
+    @Get('/hero')
+    async etHeroProduct() {
+        return await this.productService.getHeroProducts()
+    }
+
     @Post()
     @UseGuards(AdminAuthGuard)
     async addProduct(
@@ -338,5 +343,15 @@ export class ProductController {
     @Get('/gget/:slug')
     async getProductBySlug(@Param('id') productId: string) {
         return await this.productService.getProductById(productId)
+    }
+
+
+    @Get('frequently-bought-together/:productId')
+    async getFrequentlyBoughtTogether(
+        @Param('productId') productId: string,
+    ) {
+        return this.productService.getFrequentlyBoughtTogether(
+            productId,
+        );
     }
 }

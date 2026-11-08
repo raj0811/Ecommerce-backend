@@ -89,6 +89,18 @@ export class Product {
         default: false,
     })
     isFeatured: boolean;
+
+    @Prop({
+        type: [String],
+        default: [],
+    })
+    bannerImages: string[];
+
+    @Prop({
+        type: [String],
+        default: [],
+    })
+    keyhighlights: string[];
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

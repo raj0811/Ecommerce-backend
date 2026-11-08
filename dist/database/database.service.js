@@ -28,6 +28,9 @@ const support_ticket_schema_1 = require("./schema/support-ticket.schema");
 const webhookLos_schema_1 = require("./schema/webhookLos.schema");
 const mongoose_3 = require("mongoose");
 const otp_schema_1 = require("./schema/otp.schema");
+const productRecommendations_1 = require("./schema/recommendations/productRecommendations");
+const productEvent_1 = require("./schema/recommendations/productEvent");
+const processed_recommendation_order_schema_1 = require("./schema/recommendations/processed-recommendation-order.schema");
 let DatabaseService = class DatabaseService {
     connection;
     userModel;
@@ -41,7 +44,10 @@ let DatabaseService = class DatabaseService {
     supportTicketModel;
     webhookLogModel;
     otpModel;
-    constructor(connection, userModel, adminModel, customerModel, productModel, landingPageModel, cartModel, orderModel, transactionModel, supportTicketModel, webhookLogModel, otpModel) {
+    recommendedProductModel;
+    productEventModel;
+    processedOrderModel;
+    constructor(connection, userModel, adminModel, customerModel, productModel, landingPageModel, cartModel, orderModel, transactionModel, supportTicketModel, webhookLogModel, otpModel, recommendedProductModel, productEventModel, processedOrderModel) {
         this.connection = connection;
         this.userModel = userModel;
         this.adminModel = adminModel;
@@ -54,6 +60,9 @@ let DatabaseService = class DatabaseService {
         this.supportTicketModel = supportTicketModel;
         this.webhookLogModel = webhookLogModel;
         this.otpModel = otpModel;
+        this.recommendedProductModel = recommendedProductModel;
+        this.productEventModel = productEventModel;
+        this.processedOrderModel = processedOrderModel;
     }
 };
 exports.DatabaseService = DatabaseService;
@@ -71,7 +80,13 @@ exports.DatabaseService = DatabaseService = __decorate([
     __param(9, (0, mongoose_1.InjectModel)(support_ticket_schema_1.SupportTicket.name)),
     __param(10, (0, mongoose_1.InjectModel)(webhookLos_schema_1.WebhookLog.name)),
     __param(11, (0, mongoose_1.InjectModel)(otp_schema_1.Otp.name)),
+    __param(12, (0, mongoose_1.InjectModel)(productRecommendations_1.ProductRecommendation.name)),
+    __param(13, (0, mongoose_1.InjectModel)(productEvent_1.ProductEvent.name)),
+    __param(14, (0, mongoose_1.InjectModel)(processed_recommendation_order_schema_1.ProcessedRecommendationOrder.name)),
     __metadata("design:paramtypes", [mongoose_3.Connection,
+        mongoose_2.Model,
+        mongoose_2.Model,
+        mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,

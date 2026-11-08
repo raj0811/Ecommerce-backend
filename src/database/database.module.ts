@@ -12,6 +12,9 @@ import { Transaction, TransactionSchema } from './schema/transaction.schema';
 import { SupportTicket, SupportTicketSchema } from './schema/support-ticket.schema';
 import { WebhookLog, WebhookLogSchema } from './schema/webhookLos.schema';
 import { Otp, OtpSchema } from './schema/otp.schema';
+import { ProductRecommendation, ProductRecommendationSchema, RecommendedProduct } from './schema/recommendations/productRecommendations';
+import { ProductEvent, ProductEventSchema } from './schema/recommendations/productEvent';
+import { ProcessedRecommendationOrder, ProcessedRecommendationOrderSchema } from './schema/recommendations/processed-recommendation-order.schema';
 
 @Module({
   imports: [
@@ -26,7 +29,11 @@ import { Otp, OtpSchema } from './schema/otp.schema';
       { name: Transaction.name, schema: TransactionSchema },
       { name: SupportTicket.name, schema: SupportTicketSchema },
       { name: WebhookLog.name, schema: WebhookLogSchema },
-      { name: Otp.name, schema: OtpSchema }
+      { name: Otp.name, schema: OtpSchema },
+      { name: ProductRecommendation.name, schema: ProductRecommendationSchema },
+      { name: ProductEvent.name, schema: ProductEventSchema },
+      { name: ProcessedRecommendationOrder.name, schema: ProcessedRecommendationOrderSchema }
+
     ])
   ],
   providers: [DatabaseService],

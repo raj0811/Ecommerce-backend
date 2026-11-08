@@ -17,12 +17,13 @@ const whatsapp_service_1 = require("../whatsapp/whatsapp.service");
 const payment_service_1 = require("../payment/payment.service");
 const admin_AuthGuard_1 = require("../Guards/admin.AuthGuard");
 const admin_module_1 = require("../admin/admin.module");
+const product_module_1 = require("../product/product.module");
 let OrderModule = class OrderModule {
 };
 exports.OrderModule = OrderModule;
 exports.OrderModule = OrderModule = __decorate([
     (0, common_1.Module)({
-        imports: [database_module_1.DatabaseModule, ship_rocket_module_1.ShipRocketModule, user_module_1.UserModule, admin_module_1.AdminModule],
+        imports: [database_module_1.DatabaseModule, ship_rocket_module_1.ShipRocketModule, user_module_1.UserModule, admin_module_1.AdminModule, product_module_1.ProductModule],
         providers: [order_service_1.OrderService, whatsapp_service_1.WhatsappService, payment_service_1.PaymentService, admin_AuthGuard_1.AdminAuthGuard],
         exports: [order_service_1.OrderService],
         controllers: [order_controller_1.OrderController]

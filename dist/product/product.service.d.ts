@@ -1,7 +1,10 @@
 import { DatabaseService } from "../database/database.service";
 import { Types } from 'mongoose';
+import { RecommendationType } from "../database/schema/recommendations/productRecommendations";
 export declare class ProductService {
     private readonly databaseService;
+    private readonly MAX_RECOMMENDATIONS;
+    private readonly COMPLETED_ORDER_STATUSES;
     constructor(databaseService: DatabaseService);
     private generateSlug;
     addProduct(params: {
@@ -69,5 +72,38 @@ export declare class ProductService {
     getDashboardStats(): Promise<{
         success: boolean;
         data: any;
+    }>;
+    getHeroProducts(): Promise<{
+        products: [(import("../database/schema/product.schema").Product & {
+            _id: Types.ObjectId;
+        } & {
+            __v: number;
+        })[]];
+    }>;
+    updateRecommendations(params: {
+        orderId: string;
+        productIds: string[];
+        recommendationType?: RecommendationType;
+    }): Promise<any>;
+    getFrequentlyBoughtTogether(productId: string): Promise<{
+        productId: string;
+        type: string;
+        products: never[];
+        sourceCount: number;
+        algorithmVersion?: undefined;
+        generatedAt?: undefined;
+    } | {
+        productId: string;
+        type: RecommendationType;
+        algorithmVersion: number;
+        sourceCount: number;
+        generatedAt: Date;
+        products: {
+            product: Types.ObjectId;
+            score: number;
+            purchaseCount: number;
+            confidence: number;
+            lift: number;
+        }[];
     }>;
 }

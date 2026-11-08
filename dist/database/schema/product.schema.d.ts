@@ -12,6 +12,8 @@ export declare class Product {
     stock: number;
     isActive: boolean;
     isFeatured: boolean;
+    bannerImages: string[];
+    keyhighlights: string[];
 }
 export declare const ProductSchema: import("mongoose").Schema<Product, import("mongoose").Model<Product, any, any, any, any, any, Product & {
     _id: Types.ObjectId;
@@ -117,6 +119,24 @@ export declare const ProductSchema: import("mongoose").Schema<Product, import("m
         id: string;
     }>> | undefined;
     isFeatured?: import("mongoose").SchemaDefinitionProperty<boolean, Product, import("mongoose").Document<unknown, {}, Product, {
+        id: string;
+    }, import("mongoose").DefaultSchemaOptions> & Omit<Product & {
+        _id: Types.ObjectId;
+    } & {
+        __v: number;
+    }, "id"> & import("mongoose").HydratedDocumentOverrides<{
+        id: string;
+    }>> | undefined;
+    bannerImages?: import("mongoose").SchemaDefinitionProperty<string[], Product, import("mongoose").Document<unknown, {}, Product, {
+        id: string;
+    }, import("mongoose").DefaultSchemaOptions> & Omit<Product & {
+        _id: Types.ObjectId;
+    } & {
+        __v: number;
+    }, "id"> & import("mongoose").HydratedDocumentOverrides<{
+        id: string;
+    }>> | undefined;
+    keyhighlights?: import("mongoose").SchemaDefinitionProperty<string[], Product, import("mongoose").Document<unknown, {}, Product, {
         id: string;
     }, import("mongoose").DefaultSchemaOptions> & Omit<Product & {
         _id: Types.ObjectId;

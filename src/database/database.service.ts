@@ -13,6 +13,9 @@ import { SupportTicket } from './schema/support-ticket.schema';
 import { WebhookLog } from './schema/webhookLos.schema';
 import { Connection } from "mongoose";
 import { Otp } from './schema/otp.schema';
+import { ProductRecommendation, RecommendedProduct } from './schema/recommendations/productRecommendations';
+import { ProductEvent } from './schema/recommendations/productEvent';
+import { ProcessedRecommendationOrder } from './schema/recommendations/processed-recommendation-order.schema';
 @Injectable()
 export class DatabaseService {
     constructor(
@@ -39,6 +42,12 @@ export class DatabaseService {
         @InjectModel(WebhookLog.name)
         public readonly webhookLogModel: Model<WebhookLog>,
         @InjectModel(Otp.name)
-        public readonly otpModel: Model<Otp>
+        public readonly otpModel: Model<Otp>,
+        @InjectModel(ProductRecommendation.name)
+        public readonly recommendedProductModel: Model<ProductRecommendation>,
+        @InjectModel(ProductEvent.name)
+        public readonly productEventModel: Model<ProductEvent>,
+        @InjectModel(ProcessedRecommendationOrder.name)
+        public readonly processedOrderModel: Model<ProcessedRecommendationOrder>
     ) { }
 }

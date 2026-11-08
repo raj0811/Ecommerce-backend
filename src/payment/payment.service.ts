@@ -22,6 +22,8 @@ import {
 import { WhatsappService } from "src/whatsapp/whatsapp.service";
 import { UserService } from "src/user/user.service";
 import { CustomerAddress } from "aws-sdk/clients/directconnect";
+import { ProductService } from "src/product/product.service";
+import { RecommendationType } from "src/database/schema/recommendations/productRecommendations";
 
 type CheckoutItem = {
     product_id: string;
@@ -64,7 +66,8 @@ export class PaymentService {
     constructor(
         private readonly databaseService: DatabaseService,
         private readonly whatsappService: WhatsappService,
-        private readonly userService: UserService
+        private readonly userService: UserService,
+        private readonly productService: ProductService
     ) { }
 
     generateOrderNumber(): string {
@@ -479,6 +482,22 @@ export class PaymentService {
             console.log(`error in savin address ${e.message}`);
 
         }
+
+        try {
+            this.productService.updateRecommendations({
+                orderId: orderId.toString(),
+
+                productIds: input.items.map((item) =>
+                    item.product_id.toString(),
+                ),
+
+                recommendationType:
+                    RecommendationType.FREQUENTLY_BOUGHT_TOGETHER,
+            });
+        } catch (e) {
+            console.log("Error in Updating Recommendations");
+
+        }
         return {
             payment_url: `${process.env.BACKEND_URL}/payments/razorpay-init?transaction_id=${transaction_id}`,
             orderId,
@@ -837,6 +856,22 @@ export class PaymentService {
                     error.response?.data || error.message,
                 );
             });
+
+        try {
+            this.productService.updateRecommendations({
+                orderId: orderId.toString(),
+
+                productIds: input.items.map((item) =>
+                    item.product_id.toString(),
+                ),
+
+                recommendationType:
+                    RecommendationType.FREQUENTLY_BOUGHT_TOGETHER,
+            });
+        } catch (e) {
+            console.log("Error in Updating Recommendations");
+
+        }
 
         // 11. Return COD order details
         return {

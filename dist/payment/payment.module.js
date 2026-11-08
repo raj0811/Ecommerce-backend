@@ -16,12 +16,13 @@ const admin_module_1 = require("../admin/admin.module");
 const cart_module_1 = require("../cart/cart.module");
 const whatsapp_module_1 = require("../whatsapp/whatsapp.module");
 const user_module_1 = require("../user/user.module");
+const product_module_1 = require("../product/product.module");
 let PaymentModule = class PaymentModule {
 };
 exports.PaymentModule = PaymentModule;
 exports.PaymentModule = PaymentModule = __decorate([
     (0, common_1.Module)({
-        imports: [database_module_1.DatabaseModule, admin_module_1.AdminModule, cart_module_1.CartModule, whatsapp_module_1.WhatsappModule, user_module_1.UserModule],
+        imports: [database_module_1.DatabaseModule, admin_module_1.AdminModule, cart_module_1.CartModule, whatsapp_module_1.WhatsappModule, user_module_1.UserModule, product_module_1.ProductModule],
         providers: [payment_service_1.PaymentService, admin_AuthGuard_1.AdminAuthGuard],
         controllers: [payment_controller_1.PaymentController]
     })

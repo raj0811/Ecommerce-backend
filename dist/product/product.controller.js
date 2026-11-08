@@ -97,6 +97,9 @@ let ProductController = class ProductController {
             throw new Error(e);
         }
     }
+    async etHeroProduct() {
+        return await this.productService.getHeroProducts();
+    }
     async addProduct(body, req) {
         const allowedRoles = [
             admin_schema_1.AdminRole.SUPER_ADMIN,
@@ -184,6 +187,9 @@ let ProductController = class ProductController {
     async getProductBySlug(productId) {
         return await this.productService.getProductById(productId);
     }
+    async getFrequentlyBoughtTogether(productId) {
+        return this.productService.getFrequentlyBoughtTogether(productId);
+    }
 };
 exports.ProductController = ProductController;
 __decorate([
@@ -195,6 +201,12 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], ProductController.prototype, "uploadProductImage", null);
+__decorate([
+    (0, common_1.Get)('/hero'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "etHeroProduct", null);
 __decorate([
     (0, common_1.Post)(),
     (0, common_1.UseGuards)(admin_AuthGuard_1.AdminAuthGuard),
@@ -272,6 +284,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], ProductController.prototype, "getProductBySlug", null);
+__decorate([
+    (0, common_1.Get)('frequently-bought-together/:productId'),
+    __param(0, (0, common_1.Param)('productId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "getFrequentlyBoughtTogether", null);
 exports.ProductController = ProductController = __decorate([
     (0, common_1.Controller)('product'),
     __metadata("design:paramtypes", [s3_bucket_service_1.S3BucketService,

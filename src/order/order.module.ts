@@ -11,9 +11,10 @@ import { PaymentModule } from 'src/payment/payment.module';
 import { PaymentService } from 'src/payment/payment.service';
 import { AdminAuthGuard } from 'src/Guards/admin.AuthGuard';
 import { AdminModule } from 'src/admin/admin.module';
+import { ProductModule } from 'src/product/product.module';
 
 @Module({
-  imports: [DatabaseModule, ShipRocketModule, UserModule, AdminModule],
+  imports: [DatabaseModule, ShipRocketModule, UserModule, AdminModule, ProductModule],
   providers: [OrderService, WhatsappService, PaymentService, AdminAuthGuard],
   exports: [OrderService],
   controllers: [OrderController]
